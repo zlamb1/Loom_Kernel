@@ -2,11 +2,22 @@
     "$schema": "https://raw.githubusercontent.com/DanielGavin/ols/master/misc/ols.schema.json",
     "collections": [
         {
-            "name": "arch",
-            "path": "kernel32/arch"
+            "name": "kernel",
+            "path": "kernel"
         }
     ],
     "enable_document_symbols": true,
     "enable_hover": true,
-    "enable_snippets": true
+    "enable_snippets": true,
+    "profile": "i386",
+    "profiles": [
+        {
+            "name": "i386",
+            "os": "freestanding",
+            "arch": "i386",
+            "checker_path": [
+                "kernel"
+            ]
+        }
+    ]
 }

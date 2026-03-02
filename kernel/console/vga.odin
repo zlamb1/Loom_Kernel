@@ -3,7 +3,7 @@ package console
 import "base:intrinsics"
 import "core:slice"
 
-import "arch:x86"
+import "kernel:arch/x86"
 
 @(private = "file")
 VgaColor :: bit_field u8 {

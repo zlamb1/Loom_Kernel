@@ -32,4 +32,10 @@ SECTIONS {
         ebss = .;
     }
 
+    .stack ALIGN(0x1000) : {
+        sstack = .;
+        . += 0x2000;
+        estack = .;
+    }
+
 }
