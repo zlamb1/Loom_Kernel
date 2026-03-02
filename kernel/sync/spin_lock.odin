@@ -5,7 +5,7 @@ import "kernel:arch"
 import "kernel:cfg"
 import "kernel:types"
 
-when !cfg.SMP {
+when cfg.SMP {
 
 	@(private)
 	SpinLock :: struct {
