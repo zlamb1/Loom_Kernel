@@ -1,7 +1,7 @@
 package main
 
 import "kernel:console"
-import "kernel:sync"
+import "kernel:fmt"
 
 kmain32 :: proc() {
 	console := console.make_vga_console()

@@ -7,7 +7,6 @@ import "kernel:types"
 
 when cfg.SMP {
 
-	@(private)
 	SpinLock :: struct {
 		owner:  types.uhalf,
 		next:   types.uhalf,
@@ -15,7 +14,6 @@ when cfg.SMP {
 		cpu_id: arch.cpu_id,
 	}
 
-	@(private)
 	CacheLineSpinLock :: struct #align (arch.CACHE_LINE) {
 		spin_lock: SpinLock,
 		_:         [arch.CACHE_LINE - size_of(SpinLock)]byte,
@@ -44,13 +42,9 @@ when cfg.SMP {
 		the lock exceeds the limit of uhalf.
 	*/
 
-	make_spin_lock :: proc() -> (lock: SpinLock) {
+	spin_lock_create :: proc() -> (lock: SpinLock) {
 		lock.cpu_id = arch.CPU_ID_RESERVED
 		return
-	}
-
-	make_cache_line_spin_lock :: proc() -> CacheLineSpinLock {
-		return {spin_lock = make_spin_lock()}
 	}
 
 	spin_lock :: proc(self: ^SpinLock) {
@@ -116,18 +110,16 @@ when cfg.SMP {
 
 } else {
 
-	@(private)
 	SpinLock :: struct {
 		flags: uint,
 		held:  bool,
 	}
 
-	@(private)
 	CacheLineSpinLock :: struct {
 		spin_lock: SpinLock,
 	}
 
-	make_spin_lock :: proc() -> (lock: SpinLock) {
+	spin_lock_create :: proc "contextless" () -> (lock: SpinLock) {
 		return
 	}
 
@@ -156,6 +148,10 @@ when cfg.SMP {
 		arch.irq_restore(self.flags)
 	}
 
+}
+
+cache_line_spin_lock_create :: proc "contextless" () -> CacheLineSpinLock {
+	return {spin_lock = spin_lock_create()}
 }
 
 cache_line_spin_lock :: proc(self: ^CacheLineSpinLock) {
