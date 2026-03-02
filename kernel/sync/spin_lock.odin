@@ -2,64 +2,166 @@ package sync
 
 import "base:intrinsics"
 import "kernel:arch"
+import "kernel:cfg"
+import "kernel:types"
 
-@(private)
-SpinLock :: struct #align (arch.CACHE_LINE) {
-	lock:   uint,
-	flags:  uint,
-	cpu_id: arch.cpu_id,
-	_:      [arch.CACHE_LINE - size_of(uint) * 2 - size_of(arch.cpu_id)]byte,
-}
+when !cfg.SMP {
 
-#assert(align_of(SpinLock) == arch.CACHE_LINE)
-#assert(size_of(SpinLock) == arch.CACHE_LINE)
+	@(private)
+	SpinLock :: struct {
+		owner:  types.uhalf,
+		next:   types.uhalf,
+		flags:  uint,
+		cpu_id: arch.cpu_id,
+	}
 
-@(private = "file")
-BITSIZE :: size_of(uint) * 4
+	@(private)
+	CacheLineSpinLock :: struct #align (arch.CACHE_LINE) {
+		spin_lock: SpinLock,
+		_:         [arch.CACHE_LINE - size_of(SpinLock)]byte,
+	}
 
-@(private = "file")
-MASK :: (1 << BITSIZE) - 1
+	#assert(align_of(CacheLineSpinLock) == arch.CACHE_LINE)
+	#assert(size_of(CacheLineSpinLock) == arch.CACHE_LINE)
 
-/* A fair ticket spin lock implementation. */
+	/* 
+		        A fair ticket spin lock implementation. 
+		-----------------------------------------------------
+		owner := The current owner.
+		next := The next ticket.
 
-make_spin_lock :: proc() -> (lock: SpinLock) {
-	lock.cpu_id = arch.CPU_ID_RESERVED
-	return
-}
+		Lockers must fetch and add next atomically. The value
+		they fetched is now their ticket and they must spin
+		until owner == ticket.
 
-spin_lock :: proc(self: ^SpinLock) {
-	flags := arch.irq_save()
-	cpu_id := arch.get_cpu_id()
+		Lock owners must increment owner on unlock. This
+		creates a fair FIFO queue. It has higher
+		latency for low-contention cases compared to a CAS
+		test-and-set loop. In exchange, it provides fairness.
 
-	v := intrinsics.atomic_add_explicit(&self.lock, 1 << BITSIZE, .Acquire)
-	owner := v & MASK
-	ticket := (v >> BITSIZE) & MASK
+		Wrap is safe since both owner and next will wrap. The only 
+		potential for bad behavior is if the number of cores contending
+		the lock exceeds the limit of uhalf.
+	*/
 
-	if ticket != owner {
-		// We have to spin. Check for deadlock, in case we are the owner of this lock.
-		owner_cpu_id := intrinsics.atomic_load_explicit(&self.cpu_id, .Relaxed)
-		if owner_cpu_id == cpu_id {
+	make_spin_lock :: proc() -> (lock: SpinLock) {
+		lock.cpu_id = arch.CPU_ID_RESERVED
+		return
+	}
+
+	make_cache_line_spin_lock :: proc() -> CacheLineSpinLock {
+		return {spin_lock = make_spin_lock()}
+	}
+
+	spin_lock :: proc(self: ^SpinLock) {
+		flags := arch.irq_save()
+		cpu_id := arch.get_cpu_id()
+
+		// Ordering of the increment doesn't matter to the current thread of execution.
+		ticket := intrinsics.atomic_add_explicit(&self.next, 1, .Relaxed)
+
+		// Same as above.
+		owner := intrinsics.atomic_load_explicit(&self.owner, .Relaxed)
+
+		if ticket != owner {
+			// We have to spin. Check for deadlock, in case we are the owner of this lock.
+			owner_cpu_id := intrinsics.atomic_load_explicit(&self.cpu_id, .Relaxed)
+			if owner_cpu_id == cpu_id {
+				panic("spin_lock: deadlock detected")
+			}
+		}
+
+		for {
+			// Reload lock in an atomically relaxed fashion to prevent any tearing or compiler reordering.
+			owner = intrinsics.atomic_load_explicit(&self.owner, .Relaxed)
+
+			if ticket == owner do break
+
+			// This is merely empirical.
+			backoff := (ticket - owner) * 10
+
+			for i in 0 ..< backoff do arch.cpu_spinning()
+		}
+
+		// Do not reorder to before we acquired the lock.
+		intrinsics.atomic_thread_fence(.Acquire)
+
+		// Atomic store is unnecessary since we only observe flag as the lock holder.
+		self.flags = flags
+		intrinsics.atomic_store_explicit(&self.cpu_id, cpu_id, .Relaxed)
+	}
+
+	spin_unlock :: proc(self: ^SpinLock) {
+		when cfg.DBG {
+			cpu_id := arch.get_cpu_id()
+			owner_cpu_id := intrinsics.atomic_load_explicit(&self.cpu_id, .Relaxed)
+
+			if cpu_id != owner_cpu_id {
+				panic("spin_unlock: unlocked while not held")
+			}
+		}
+
+		// Save locks before unlocking so we don't race.
+		flags := self.flags
+
+		// Reset cpu_id so we don't detect a false deadlock if we quickly reacquire the lock.
+		intrinsics.atomic_store_explicit(&self.cpu_id, arch.CPU_ID_RESERVED, .Relaxed)
+
+		// Increment owner. Next ticket holder can now unlock.
+		intrinsics.atomic_add_explicit(&self.owner, 1, .Release)
+
+		// Restore IRQs after releasing lock.
+		arch.irq_restore(flags)
+	}
+
+} else {
+
+	@(private)
+	SpinLock :: struct {
+		flags: uint,
+		held:  bool,
+	}
+
+	@(private)
+	CacheLineSpinLock :: struct {
+		spin_lock: SpinLock,
+	}
+
+	make_spin_lock :: proc() -> (lock: SpinLock) {
+		return
+	}
+
+	spin_lock :: proc(self: ^SpinLock) {
+		flags := arch.irq_save()
+
+		if (self.held) {
 			panic("spin_lock: deadlock detected")
 		}
+
+		self.flags = flags
+		self.held = true
+
+		intrinsics.atomic_signal_fence(.Acquire)
 	}
 
-	// Reload lock in an atomically relaxed fashion to prevent any tearing or compiler shenanigans.
-	for ; ticket != owner; owner = intrinsics.atomic_load_explicit(&self.lock, .Relaxed) & MASK {
-		// Notify CPU we are spinning. (e.g. pause on x86)
-		arch.cpu_spinning()
+	spin_unlock :: proc(self: ^SpinLock) {
+		when cfg.DBG {
+			if !self.held {
+				panic("spin_unlock: unlocked while not held")
+			}
+		}
+
+		intrinsics.atomic_signal_fence(.Release)
+		self.held = false
+		arch.irq_restore(self.flags)
 	}
 
-	// Don't reorder any memory operations to before we acquired the lock.
-	intrinsics.atomic_thread_fence(.Acquire)
-
-	self.flags = flags
-	intrinsics.atomic_store_explicit(&self.cpu_id, cpu_id, .Relaxed)
 }
 
-spin_unlock :: proc(self: ^SpinLock) {
-	intrinsics.atomic_store_explicit(&self.cpu_id, arch.CPU_ID_RESERVED, .Relaxed)
-	// Add 1 to owner. Next ticket holder can now unlock.
-	// Release semantics prevents any stores from escaping the critical section.
-	intrinsics.atomic_add_explicit(&self.lock, 1, .Release)
-	arch.irq_restore(self.flags)
+cache_line_spin_lock :: proc(self: ^CacheLineSpinLock) {
+	spin_lock(&self.spin_lock)
+}
+
+cache_line_spin_unlock :: proc(self: ^CacheLineSpinLock) {
+	spin_unlock(&self.spin_lock)
 }
