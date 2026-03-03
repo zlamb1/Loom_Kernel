@@ -7,20 +7,20 @@ import "kernel:types"
 
 when cfg.SMP {
 
-	SpinLock :: struct {
+	Spin_Lock :: struct {
 		owner:  types.uhalf,
 		next:   types.uhalf,
 		flags:  uint,
 		cpu_id: arch.cpu_id,
 	}
 
-	CacheLineSpinLock :: struct #align (arch.CACHE_LINE) {
-		spin_lock: SpinLock,
+	Cache_Line_Spin_Lock :: struct #align (arch.CACHE_LINE) {
+		spin_lock: Spin_Lock,
 		_:         [arch.CACHE_LINE - size_of(SpinLock)]byte,
 	}
 
-	#assert(align_of(CacheLineSpinLock) == arch.CACHE_LINE)
-	#assert(size_of(CacheLineSpinLock) == arch.CACHE_LINE)
+	#assert(align_of(Cache_Line_Spin_Lock) == arch.CACHE_LINE)
+	#assert(size_of(Cache_Line_Spin_Lock) == arch.CACHE_LINE)
 
 	/* 
 		        A fair ticket spin lock implementation. 
@@ -42,12 +42,12 @@ when cfg.SMP {
 		the lock exceeds the limit of uhalf.
 	*/
 
-	spin_lock_create :: proc() -> (lock: SpinLock) {
+	spin_lock_create :: proc() -> (lock: Spin_Lock) {
 		lock.cpu_id = arch.CPU_ID_RESERVED
 		return
 	}
 
-	spin_lock :: proc(self: ^SpinLock) {
+	spin_lock :: proc(self: ^Spin_Lock) {
 		flags := arch.irq_save()
 		cpu_id := arch.get_cpu_id()
 
@@ -85,7 +85,7 @@ when cfg.SMP {
 		intrinsics.atomic_store_explicit(&self.cpu_id, cpu_id, .Relaxed)
 	}
 
-	spin_unlock :: proc(self: ^SpinLock) {
+	spin_unlock :: proc(self: ^Spin_Lock) {
 		when cfg.DBG {
 			cpu_id := arch.get_cpu_id()
 			owner_cpu_id := intrinsics.atomic_load_explicit(&self.cpu_id, .Relaxed)
@@ -110,20 +110,20 @@ when cfg.SMP {
 
 } else {
 
-	SpinLock :: struct {
+	Spin_Lock :: struct {
 		flags: uint,
 		held:  bool,
 	}
 
-	CacheLineSpinLock :: struct {
-		spin_lock: SpinLock,
+	Cache_Line_Spin_Lock :: struct {
+		spin_lock: Spin_Lock,
 	}
 
-	spin_lock_create :: proc "contextless" () -> (lock: SpinLock) {
+	spin_lock_create :: proc "contextless" () -> (lock: Spin_Lock) {
 		return
 	}
 
-	spin_lock :: proc(self: ^SpinLock) {
+	spin_lock :: proc(self: ^Spin_Lock) {
 		flags := arch.irq_save()
 
 		if (self.held) {
@@ -136,7 +136,7 @@ when cfg.SMP {
 		intrinsics.atomic_signal_fence(.Acquire)
 	}
 
-	spin_unlock :: proc(self: ^SpinLock) {
+	spin_unlock :: proc(self: ^Spin_Lock) {
 		when cfg.DBG {
 			if !self.held {
 				panic("spin_unlock: unlocked while not held")
@@ -150,14 +150,14 @@ when cfg.SMP {
 
 }
 
-cache_line_spin_lock_create :: proc "contextless" () -> CacheLineSpinLock {
+cache_line_spin_lock_create :: proc "contextless" () -> Cache_Line_Spin_Lock {
 	return {spin_lock = spin_lock_create()}
 }
 
-cache_line_spin_lock :: proc(self: ^CacheLineSpinLock) {
+cache_line_spin_lock :: proc(self: ^Cache_Line_Spin_Lock) {
 	spin_lock(&self.spin_lock)
 }
 
-cache_line_spin_unlock :: proc(self: ^CacheLineSpinLock) {
+cache_line_spin_unlock :: proc(self: ^Cache_Line_Spin_Lock) {
 	spin_unlock(&self.spin_lock)
 }

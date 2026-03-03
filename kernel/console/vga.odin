@@ -6,22 +6,22 @@ import "core:slice"
 import "kernel:arch/x86"
 
 @(private = "file")
-VgaColor :: bit_field u8 {
+Vga_Color :: bit_field u8 {
 	fg: u8 | 4,
 	bg: u8 | 4,
 }
 
 @(private = "file")
-VgaAttributes :: struct #packed {
-	ch:     u8,
-	colors: VgaColor,
+Vga_Attributes :: struct #packed {
+	ch:           u8,
+	using colors: Vga_Color,
 }
 
 @(private = "file")
-VgaConsole :: struct {
-	super: Console,
-	x:     u32,
-	y:     u32,
+Vga_Console :: struct {
+	using super: Console,
+	x:           u32,
+	y:           u32,
 }
 
 @(private = "file")
@@ -52,12 +52,7 @@ CRTC_CURSOR_HIGH_LOC_REG :: u8(0xE)
 CRTC_CURSOR_LOW_LOC_REG :: u8(0xF)
 
 @(private = "file")
-p := slice.from_ptr(cast(^VgaAttributes)uintptr(0xB8000), CELLS)
-
-@(private = "file")
-make_color :: proc(fg := FG, bg := BG) -> VgaColor {
-	return {fg = fg, bg = bg}
-}
+p := slice.from_ptr(cast(^Vga_Attributes)uintptr(0xB8000), CELLS)
 
 @(private = "file")
 move_cursor :: proc(x: u32, y: u32) {
@@ -69,30 +64,41 @@ move_cursor :: proc(x: u32, y: u32) {
 }
 
 @(private = "file")
-vga_console_getwh :: proc(self: ^Console) -> (w: u32, h: u32) {
-	w = COLS
-	h = ROWS
+vga_console_proc :: proc(
+	self: ^Console,
+	mode: Console_Proc_Mode,
+	args: Console_Proc_Args,
+) -> (
+	ret: Console_Proc_Return,
+	err: Console_Error,
+) {
+	self := cast(^Vga_Console)self
+
+	switch mode {
+	case .Get_WH:
+		ret.wh[0] = COLS
+		ret.wh[1] = ROWS
+	case .Get_XY:
+		ret.xy[0] = self.x
+		ret.xy[1] = self.y
+	case .Write:
+		vga_console_write(self, args.s)
+	case .Clear:
+		vga_console_clear(self)
+	}
+
+	err = .None
 	return
 }
 
 @(private = "file")
-vga_console_getxy :: proc(self: ^Console) -> (x: u32, y: u32) {
-	self := cast(^VgaConsole)self
-	x = self.x
-	y = self.y
-	return
-}
-
-@(private = "file")
-vga_console_write :: proc(self: ^Console, s: string) {
-	self := cast(^VgaConsole)self
+vga_console_write :: proc(self: ^Vga_Console, s: []u8) {
 	index: u32 = self.y * COLS + self.x
-	default := make_color()
 
 	for i in 0 ..< len(s) {
 		if index >= CELLS do index = 0
 		ch := s[i]
-		intrinsics.volatile_store(&p[index], {ch = ch, colors = default})
+		intrinsics.volatile_store(&p[index], {ch = ch, fg = FG, bg = BG})
 		index += 1
 	}
 
@@ -102,12 +108,9 @@ vga_console_write :: proc(self: ^Console, s: string) {
 }
 
 @(private = "file")
-vga_console_clear :: proc(self: ^Console) {
-	self := cast(^VgaConsole)self
-	default := make_color()
-
+vga_console_clear :: proc(self: ^Vga_Console) {
 	for index in 0 ..< CELLS {
-		intrinsics.volatile_store(&p[index], {ch = 0, colors = default})
+		intrinsics.volatile_store(&p[index], {ch = 0, fg = FG, bg = BG})
 	}
 
 	self.x = 0
@@ -116,15 +119,10 @@ vga_console_clear :: proc(self: ^Console) {
 }
 
 @(private = "file")
-vga_console := VgaConsole {
-	super = {
-		getwh = vga_console_getwh,
-		getxy = vga_console_getxy,
-		write = vga_console_write,
-		clear = vga_console_clear,
-	},
+vga_console := Vga_Console {
+	procedure = vga_console_proc,
 }
 
-make_vga_console :: proc() -> ^Console {
+vga_console_get :: proc() -> ^Console {
 	return &vga_console.super
 }

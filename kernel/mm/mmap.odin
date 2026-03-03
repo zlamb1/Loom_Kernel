@@ -1,30 +1,16 @@
 package mm
 
-MemoryType :: enum byte {
+Memory_Type :: enum byte {
 	Free     = 0,
 	Reserved = 1,
 }
 
-MemoryRegion :: struct {
+Memory_Region :: struct {
 	start:  uint,
 	length: uint,
-	type:   MemoryType,
+	type:   Memory_Type,
 }
 
-MemoryMap :: struct {
-	regions: []MemoryRegion,
-}
-
-MemoryMapIterator :: struct {
-	iterate:   proc(self: ^MemoryMapIterator) -> (MemoryRegion, bool),
-	overrides: []MemoryRegion,
-}
-
-memory_map_hook :: proc(
-	self: ^MemoryMapIterator,
-	hook: proc(region: MemoryRegion) -> bool,
-) -> bool {
-
-
-	return true
+Memory_Map :: struct {
+	regions: []Memory_Region,
 }

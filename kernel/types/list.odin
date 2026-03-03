@@ -2,25 +2,25 @@ package types
 
 import "kernel:cfg"
 
-ListNode :: struct {
-	prev: ^ListNode,
-	next: ^ListNode,
+List_Node :: struct {
+	prev: ^List_Node,
+	next: ^List_Node,
 }
 
 @(private = "file")
-ListIterator :: struct {
-	list: ^ListNode,
-	cur:  ^ListNode,
+List_Iterator :: struct {
+	list: ^List_Node,
+	cur:  ^List_Node,
 }
 
-list_init :: proc "contextless" (self: ^ListNode) {
+list_init :: proc "contextless" (self: ^List_Node) {
 	cfg.dbg_assert(self != nil)
 
 	self.prev = self
 	self.next = self
 }
 
-list_iterator_create :: proc(list: ^ListNode) -> ListIterator {
+list_iterator_create :: proc(list: ^List_Node) -> List_Iterator {
 	cfg.dbg_assert(list != nil)
 	cfg.dbg_assert(list.prev != nil)
 	cfg.dbg_assert(list.next != nil)
@@ -28,7 +28,7 @@ list_iterator_create :: proc(list: ^ListNode) -> ListIterator {
 	return {list = list, cur = list.next}
 }
 
-list_iterate :: proc(iterator: ^ListIterator) -> (node: ^ListNode, ok: bool) {
+list_iterate :: proc(iterator: ^List_Iterator) -> (node: ^List_Node, ok: bool) {
 	cfg.dbg_assert(iterator != nil)
 
 	cur := iterator.cur
@@ -46,7 +46,7 @@ list_iterate :: proc(iterator: ^ListIterator) -> (node: ^ListNode, ok: bool) {
 }
 
 list_iterate_entries :: proc(
-	iterator: ^ListIterator,
+	iterator: ^List_Iterator,
 	$T: typeid,
 	$field_name: string,
 ) -> (
@@ -61,7 +61,7 @@ list_iterate_entries :: proc(
 
 list_add :: list_prepend
 
-list_prepend :: proc(list: ^ListNode, node: ^ListNode) {
+list_prepend :: proc(list: ^List_Node, node: ^List_Node) {
 	cfg.dbg_assert(list != nil)
 	cfg.dbg_assert(list.prev != nil)
 	cfg.dbg_assert(list.next != nil)
@@ -72,7 +72,7 @@ list_prepend :: proc(list: ^ListNode, node: ^ListNode) {
 	list.next = node
 }
 
-list_append :: proc(list: ^ListNode, node: ^ListNode) {
+list_append :: proc(list: ^List_Node, node: ^List_Node) {
 	cfg.dbg_assert(list != nil)
 	cfg.dbg_assert(list.prev != nil)
 	cfg.dbg_assert(list.next != nil)
@@ -83,7 +83,7 @@ list_append :: proc(list: ^ListNode, node: ^ListNode) {
 	list.prev = node
 }
 
-list_remove :: proc(node: ^ListNode) {
+list_remove :: proc(node: ^List_Node) {
 	cfg.dbg_assert(node != nil)
 	cfg.dbg_assert(node.prev != nil)
 	cfg.dbg_assert(node.next != nil)
@@ -94,7 +94,7 @@ list_remove :: proc(node: ^ListNode) {
 	node.next = node
 }
 
-list_is_empty :: proc(list: ^ListNode) -> bool {
+list_is_empty :: proc(list: ^List_Node) -> bool {
 	cfg.dbg_assert(list != nil)
 	cfg.dbg_assert(list.prev != nil)
 	cfg.dbg_assert(list.next != nil)

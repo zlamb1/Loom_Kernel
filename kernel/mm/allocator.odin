@@ -1,13 +1,15 @@
 package mm
 
-AllocatorError :: enum byte {
-	None            = 0,
-	OutOfMemory     = 1,
-	InvalidPointer  = 2,
-	InvalidArgument = 3,
+import "allocator"
+import "page"
+
+Allocator_Error :: allocator.Allocator_Error
+Allocator_Mode :: allocator.Allocator_Mode
+
+alloc :: proc {
+	page.alloc,
 }
 
-MemoryRange :: struct {
-	start: uintptr,
-	end:   uintptr, // exclusive
+free :: proc {
+	page.free,
 }

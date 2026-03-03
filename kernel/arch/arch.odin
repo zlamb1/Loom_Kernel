@@ -6,11 +6,11 @@ cpu_spinning :: proc "c" () {
 	// to notify the CPU that we are spinning.
 }
 
-cpu_id :: distinct uint
+Cpu_ID :: distinct uint
 
-CPU_ID_RESERVED :: max(cpu_id)
+CPU_ID_RESERVED :: max(Cpu_ID)
 
-get_cpu_id :: proc() -> cpu_id {
+get_cpu_id :: proc() -> Cpu_ID {
 	return 0
 }
 

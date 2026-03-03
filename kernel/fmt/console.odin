@@ -6,8 +6,8 @@ import "kernel:sync"
 import "kernel:types"
 
 Fmt :: struct {
-	lock:     sync.SpinLock,
-	consoles: types.ListNode,
+	lock:     sync.Spin_Lock,
+	consoles: types.List_Node,
 }
 
 fmt := Fmt{}

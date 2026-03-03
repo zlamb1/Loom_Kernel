@@ -2,9 +2,11 @@ package main
 
 import "kernel:console"
 import "kernel:fmt"
+import "kernel:mm/page"
 
 kmain32 :: proc() {
-	console := console.make_vga_console()
-	console->clear()
-	console->write("Hello, kernel!")
+	con := console.vga_console_get()
+	console.clear(con)
+	s := "Hello, Kernel!"
+	console.write(con, transmute([]u8)s)
 }
