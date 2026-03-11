@@ -40,7 +40,7 @@ add_dependencies(limine Limine)
 set_target_properties(limine PROPERTIES IMPORTED_LOCATION "${LIMINE_BINARY}")
 
 set(SRCDIR "${CMAKE_CURRENT_LIST_DIR}/src")
-set(SRCS ${SRCDIR}/main.c)
+set(SRCS ${SRCDIR}/limine.c ${SRCDIR}/main.c)
 set(LINKER_SCRIPT ${SRCDIR}/loom.ld)
 
 add_executable(loom_elf ${SRCS})

@@ -6,25 +6,25 @@ SECTIONS {
 
     . = __virt_base;
 
-    .text : AT(. - __virt_base + __phys_base) {
+    .text : AT(__phys_base) {
         *(.text*)
     }
 
-    . = ALIGN(CONSTANT(MAXPAGESIZE));
+    . = ALIGN(0x1000);
 
-    .data : AT(. - __virt_base + __phys_base) {
+    .data : {
         *(.data*)
     }
 
-    . = ALIGN(CONSTANT(MAXPAGESIZE));
+    . = ALIGN(0x1000);
 
-    .rodata : AT(. - __virt_base + __phys_base) {
+    .rodata : {
         *(.rodata*)
     }
 
-    . = ALIGN(CONSTANT(MAXPAGESIZE));
+    . = ALIGN(0x1000);
 
-    .bss : AT(. - __virt_base + __phys_base) {
+    .bss : {
         *(.bss*)
     }
 
