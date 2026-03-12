@@ -40,15 +40,34 @@ add_dependencies(limine Limine)
 set_target_properties(limine PROPERTIES IMPORTED_LOCATION "${LIMINE_BINARY}")
 
 set(SRCDIR "${CMAKE_CURRENT_LIST_DIR}/src")
-set(SRCS ${SRCDIR}/limine.c ${SRCDIR}/main.c)
+set(SRCS ${SRCDIR}/font.c ${SRCDIR}/gfx_console.c ${SRCDIR}/limine.c ${SRCDIR}/main.c ${SRCDIR}/print.c)
 set(LINKER_SCRIPT ${SRCDIR}/loom.ld)
 
+set(LOOM_FONT_DIR "${CMAKE_CURRENT_LIST_DIR}/fonts")
+set(CONSOLE_FONT_NAME "consolefont")
+set(CONSOLE_FONT_BASENAME "${CONSOLE_FONT_NAME}.psfu")
+set(CONSOLE_FONT "${LOOM_FONT_DIR}/${CONSOLE_FONT_BASENAME}")
+set(CONSOLE_FONT_BINARY "${CMAKE_BINARY_DIR}/${CONSOLE_FONT_NAME}.o")
+
+add_custom_command(
+    OUTPUT ${CONSOLE_FONT_BINARY}
+    COMMAND ${CMAKE_OBJCOPY} -Ibinary -Oelf64-x86-64 ${CONSOLE_FONT_BASENAME} ${CONSOLE_FONT_BINARY}
+    COMMAND ${CMAKE_OBJCOPY} --rename-section .data=.rodata,alloc,load,readonly,data,contents ${CONSOLE_FONT_BINARY}
+    DEPENDS ${CONSOLE_FONT}
+    WORKING_DIRECTORY ${LOOM_FONT_DIR}
+)
+
+add_custom_target(loom_console_font ALL DEPENDS ${CONSOLE_FONT_BINARY})
+
 add_executable(loom_elf ${SRCS})
+
 set_target_properties(loom_elf PROPERTIES OUTPUT_NAME "loom.elf")
-target_include_directories(loom_elf PRIVATE "include")
-target_compile_options(loom_elf PRIVATE "-g")
-target_link_options(loom_elf PRIVATE "-T${LINKER_SCRIPT}")
 set_target_properties(loom_elf PROPERTIES LINK_DEPENDS ${LINKER_SCRIPT})
+
+target_compile_options(loom_elf PRIVATE "-g")
+target_include_directories(loom_elf PRIVATE "include")
+target_link_libraries(loom_elf ${CONSOLE_FONT_BINARY})
+target_link_options(loom_elf PRIVATE "-T${LINKER_SCRIPT}")
 
 set(MKIMG "${LOOM_CMAKE_AUX_DIR}/mkimg.sh")
 set(RUN "${LOOM_CMAKE_AUX_DIR}/run.sh")

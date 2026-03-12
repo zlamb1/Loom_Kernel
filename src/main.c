@@ -1,8 +1,12 @@
 #include "loom/compiler.h"
+#include "loom/console.h"
 #include "loom/limine.h"
+#include "loom/print.h"
 
-noreturn void
-loom_main (void)
+static struct console *early_console;
+
+static void
+kprint_init (void)
 {
   u64                         framebuffer_count;
   struct limine_framebuffer **framebuffers;
@@ -10,18 +14,22 @@ loom_main (void)
 
   if (!limine_get_framebuffers (&framebuffer_count, &framebuffers)
       || !framebuffer_count)
-    goto done;
+    return;
 
   framebuffer = framebuffers[0];
   if (framebuffer == null)
-    goto done;
+    return;
 
-  byte *data = framebuffer->address;
-  data[0] = 0xFF;
-  data[1] = 0xFF;
-  data[2] = 0xFF;
+  early_console = early_limine_gfx_console_create (framebuffer);
+  set_print_console (early_console);
+}
 
-done:
+noreturn void
+loom_main (void)
+{
+  kprint_init ();
+  kprintf ("Hello, kernel! %d\n", -123);
+
   for (;;)
     ;
 }

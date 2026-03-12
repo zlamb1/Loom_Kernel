@@ -3,9 +3,17 @@
 
 #include <stdint.h>
 
-#define true  1
+#ifndef true
+#define true 1
+#endif
+
+#ifndef false
 #define false 0
-#define null  0
+#endif
+
+#ifndef null
+#define null 0
+#endif
 
 typedef unsigned char  byte;
 typedef unsigned short ushort;
@@ -21,7 +29,6 @@ typedef u8  b8;
 typedef u16 b16;
 typedef u32 b32;
 typedef u64 b64;
-typedef uint bool;
 
 typedef u8  u8le;
 typedef u16 u16le;
