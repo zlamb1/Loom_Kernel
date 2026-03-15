@@ -46,10 +46,12 @@ control_codes (struct gfx_console *console, byte ch)
         }
       break;
     case '\t':
-      auto x = (console->x + 4) / 4 * 4;
-      if (x < console->tw)
-        console->x = x;
-      break;
+      {
+        auto x = (console->x + 4) / 4 * 4;
+        if (x < console->tw)
+          console->x = x;
+        break;
+      }
     case '\r':
       console->x = 0;
       break;

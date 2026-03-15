@@ -15,10 +15,11 @@
 #define null 0
 #endif
 
-typedef unsigned char  byte;
-typedef unsigned short ushort;
-typedef unsigned int   uint;
-typedef unsigned long  ulong;
+typedef unsigned char      byte;
+typedef unsigned short     ushort;
+typedef unsigned int       uint;
+typedef unsigned long      ulong;
+typedef unsigned long long ullong;
 
 typedef uint8_t  u8;
 typedef uint16_t u16;
@@ -29,6 +30,7 @@ typedef u8  b8;
 typedef u16 b16;
 typedef u32 b32;
 typedef u64 b64;
+typedef uint bool;
 
 typedef u8  u8le;
 typedef u16 u16le;

@@ -11,35 +11,6 @@ struct writer
   void *data;
 };
 
-#define DECLARE_WRITE_UNSIGNED(type)                                          \
-  static inline type write_##type (struct writer writer, type u)              \
-  {                                                                           \
-    char buf[sizeof (type) * CHAR_BIT];                                       \
-    int  digits = 0;                                                          \
-                                                                              \
-    if (u == 0)                                                               \
-      {                                                                       \
-        buf[0] = '0';                                                         \
-        digits = 1;                                                           \
-      }                                                                       \
-                                                                              \
-    while (u)                                                                 \
-      {                                                                       \
-        type r = u % 10;                                                      \
-        u /= 10;                                                              \
-        buf[digits++] = r + '0';                                              \
-      }                                                                       \
-                                                                              \
-    for (int i = 0, j = digits - 1; i < (digits >> 1); ++i, --j)              \
-      {                                                                       \
-        char tmp = buf[i];                                                    \
-        buf[i] = buf[j];                                                      \
-        buf[j] = tmp;                                                         \
-      }                                                                       \
-                                                                              \
-    return write_str (writer, digits, buf);                                   \
-  }
-
 static inline uint
 write_char (struct writer writer, char ch)
 {
@@ -61,25 +32,27 @@ write_cstr (struct writer writer, const char *s)
   return writer.write (writer.data, n, s);
 }
 
-DECLARE_WRITE_UNSIGNED (uint)
-
 static inline uint
-write_int (struct writer writer, int i)
+write_pad (struct writer writer, uint repeat, char ch)
 {
-  uint n = 0, u;
+#define CAP 64
+  char buf[CAP];
+  uint written = 0;
 
-  if (i < 0)
+  for (uint i = 0; i < CAP; ++i)
+    buf[i] = ch;
+
+  while (repeat)
     {
-      n = write_char (writer, '-');
-      if (i == INT_MIN)
-        u = ((uint) INT_MAX) + 1;
-      else
-        u = (uint) (-i);
+      uint write = CAP;
+      if (repeat < write)
+        write = repeat;
+      written += write_str (writer, write, buf);
+      repeat -= write;
     }
-  else
-    u = (uint) i;
 
-  return n + write_uint (writer, u);
+#undef CAP
+  return written;
 }
 
 #endif

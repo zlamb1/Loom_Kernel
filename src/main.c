@@ -28,7 +28,7 @@ noreturn void
 loom_main (void)
 {
   kprint_init ();
-  kprintf ("Hello, kernel! %d\n", -123);
+  kprintfln ("Booting.");
 
   for (;;)
     ;
