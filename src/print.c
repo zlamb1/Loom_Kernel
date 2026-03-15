@@ -42,12 +42,6 @@ struct va_list_arg
 
 static struct console *print_console = null;
 
-static inline uint
-write_nil (void *data, uint n, const char *s)
-{
-  return n;
-}
-
 static inline bool force_inline
 is_digit (char ch)
 {

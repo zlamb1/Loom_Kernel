@@ -12,6 +12,12 @@ struct writer
 };
 
 static inline uint
+write_nil (void *data, uint n, const char *s)
+{
+  return n;
+}
+
+static inline uint
 write_char (struct writer writer, char ch)
 {
   return writer.write (writer.data, 1, &ch);

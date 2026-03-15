@@ -1,6 +1,7 @@
 #ifndef LOOM_LIMINE_H
 #define LOOM_LIMINE_H 1
 
+#include "loom/time.h"
 #include "loom/types.h"
 
 #define LIMINE_REQUESTS_START_MARKER                                          \
@@ -14,6 +15,9 @@
 
 #define LIMINE_FRAMEBUFFER_REQUEST_ID                                         \
   { LIMINE_COMMON_MAGIC, 0x9d5827dcd881dd75, 0xa3148604f6fab11b }
+
+#define LIMINE_DATE_AT_BOOT_REQUEST_ID                                        \
+  { LIMINE_COMMON_MAGIC, 0x502746e184c088aa, 0xfbc5ec83e6327893 }
 
 #define LIMINE_REQUESTS_END_MARKER { 0xadc0e0531bb10d03, 0x9572709f31764c62 }
 
@@ -84,7 +88,30 @@ struct limine_video_mode
   u8  blue_mask_shift;
 };
 
+struct limine_date_at_boot_request
+{
+  u64                                  id[4];
+  u64                                  revision;
+  struct limine_date_at_boot_response *response;
+};
+
+struct limine_date_at_boot_response
+{
+  u64 revision;
+  i64 timestamp;
+};
+
 bool limine_get_framebuffers (u64                         *framebuffer_count,
                               struct limine_framebuffer ***framebuffers);
+
+static inline struct console *
+early_limine_gfx_console_create (struct limine_framebuffer *framebuffer)
+{
+  return early_gfx_console_create (framebuffer->address, framebuffer->width,
+                                   framebuffer->height, framebuffer->pitch,
+                                   framebuffer->bpp);
+}
+
+bool limine_get_boot_time (timestamp *ts);
 
 #endif

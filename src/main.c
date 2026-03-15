@@ -1,7 +1,7 @@
-#include "loom/compiler.h"
 #include "loom/console.h"
 #include "loom/limine.h"
 #include "loom/print.h"
+#include "loom/time.h"
 
 static struct console *early_console;
 
@@ -24,11 +24,20 @@ kprint_init (void)
   set_print_console (early_console);
 }
 
+static void
+limine_early_boot (void)
+{
+  timestamp boot_time;
+  kprint_init ();
+  kprintfln ("Booting...");
+  if (limine_get_boot_time (&boot_time))
+    ts_kprintfln (boot_time, "Boot Time: %A, %B %e, %Y, %I:%M:%S %P UTC");
+}
+
 noreturn void
 loom_main (void)
 {
-  kprint_init ();
-  kprintfln ("Booting.");
+  limine_early_boot ();
 
   for (;;)
     ;

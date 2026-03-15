@@ -12,6 +12,21 @@ void            set_print_console (struct console *);
 
 uint vwprintf (struct writer writer, const char *fmt, va_list args);
 
+static inline struct writer
+get_print_writer (void)
+{
+  struct console *print_console = get_print_console ();
+  struct writer   writer = { 0 };
+
+  if (print_console != null)
+    {
+      writer.write = print_console->write;
+      writer.data = print_console->data;
+    }
+
+  return writer;
+}
+
 static inline uint
 wprintf (struct writer writer, const char *fmt, ...)
 {
@@ -43,31 +58,13 @@ wprintfln (struct writer writer, const char *fmt, ...)
 static inline uint
 vkprintf (const char *fmt, va_list args)
 {
-  struct console *print_console = get_print_console ();
-  struct writer   writer = { 0 };
-
-  if (print_console != null)
-    {
-      writer.write = print_console->write;
-      writer.data = print_console->data;
-    }
-
-  return vwprintf (writer, fmt, args);
+  return vwprintf (get_print_writer (), fmt, args);
 }
 
 static inline uint
 vkprintfln (const char *fmt, va_list args)
 {
-  struct console *print_console = get_print_console ();
-  struct writer   writer = { 0 };
-
-  if (print_console != null)
-    {
-      writer.write = print_console->write;
-      writer.data = print_console->data;
-    }
-
-  return vwprintfln (writer, fmt, args);
+  return vwprintfln (get_print_writer (), fmt, args);
 }
 
 static inline uint

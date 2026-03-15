@@ -1,4 +1,3 @@
-#include "loom/limine.h"
 #ifndef LOOM_CONSOLE_H
 #define LOOM_CONSOLE_H 1
 
@@ -12,14 +11,6 @@ struct console
 
 struct console *early_gfx_console_create (u8 *address, u32 width, u32 height,
                                           u32 stride, u32 bpp);
-
-static inline struct console *
-early_limine_gfx_console_create (struct limine_framebuffer *framebuffer)
-{
-  return early_gfx_console_create (framebuffer->address, framebuffer->width,
-                                   framebuffer->height, framebuffer->pitch,
-                                   framebuffer->bpp);
-}
 
 static inline uint
 console_write (struct console *console, uint n, const char *s)
