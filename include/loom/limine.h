@@ -1,8 +1,7 @@
 #ifndef LOOM_LIMINE_H
 #define LOOM_LIMINE_H 1
 
-#include "loom/time.h"
-#include "loom/types.h"
+#include "loom/boot_info.h"
 
 #define LIMINE_REQUESTS_START_MARKER                                          \
   { 0xf6b8f4b39de7d1ae, 0xfab91a6940fcb9cf, 0x785c6ed015d3e316,               \
@@ -113,5 +112,7 @@ early_limine_gfx_console_create (struct limine_framebuffer *framebuffer)
 }
 
 bool limine_get_boot_time (timestamp *ts);
+
+struct boot_info limine_early_boot (void);
 
 #endif

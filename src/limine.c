@@ -32,3 +32,33 @@ limine_get_boot_time (timestamp *ts)
   *ts = date_at_boot_request.response->timestamp;
   return true;
 }
+
+static void
+kprint_init (void)
+{
+  u64                         framebuffer_count;
+  struct limine_framebuffer **framebuffers;
+  struct limine_framebuffer  *framebuffer;
+
+  if (!limine_get_framebuffers (&framebuffer_count, &framebuffers)
+      || !framebuffer_count)
+    return;
+
+  framebuffer = framebuffers[0];
+  if (framebuffer == null)
+    return;
+
+  auto early_console = early_limine_gfx_console_create (framebuffer);
+  set_print_console (early_console);
+}
+
+struct boot_info
+limine_early_boot (void)
+{
+  struct boot_info bi;
+
+  bi.boot_time_set = limine_get_boot_time (&bi.boot_time);
+  kprint_init ();
+
+  return bi;
+}
