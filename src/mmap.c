@@ -19,6 +19,9 @@ struct evt_hook_ctx
   struct mem_event *evts;
 };
 
+extern char __phys_base;
+extern char __phys_end;
+
 const char *memory_type_names[MEMORY_TYPE_MAX_VALUE + 1] = {
   [MEMORY_TYPE_FREE] = "Free",
   [MEMORY_TYPE_RESERVED] = "Reserved",
@@ -40,10 +43,9 @@ _build_mmap (uint evt_count, struct mem_event *evts)
         auto evt1 = evts[i];
         auto evt2 = evts[j];
         if (evt1.start > evt2.start
-            || (evt1.start == evt2.start && evt1.type < evt2.type))
+            || (evt1.start == evt2.start && evt1.type > evt2.type))
           {
-            // Sort by start first, then if same start, then sort end events
-            // before start events.
+            // Sort by address then by type (start events come first).
             evts[i] = evt2;
             evts[j] = evt1;
           }
@@ -173,11 +175,15 @@ mmap_init (mmap_iterator iterator)
   struct mem_event    evts[EVTS_SIZE];
   struct evt_hook_ctx ctx = { .evts = evts };
 
+  auto phys_base = (uintptr) &__phys_base;
+  auto phys_end = (uintptr) &__phys_end;
+
+  if (mmap_evt_hook (phys_base, phys_end - phys_base, MEMORY_TYPE_RESERVED,
+                     &ctx))
+    goto fail;
+
   if (iterator (mmap_evt_hook, &ctx) || _build_mmap (ctx.count, evts))
-    {
-      kprintfln ("Failed to build memory map. Too many entries.");
-      return;
-    }
+    goto fail;
 
   for (uint i = 0; i < mmap.count; ++i)
     {
@@ -185,4 +191,10 @@ mmap_init (mmap_iterator iterator)
       kprintfln ("Memory Region: %#.16x64 -> %#-.16x64 [%s]", region.start,
                  region.start + region.length, memory_type_names[region.type]);
     }
+
+  return;
+
+fail:
+  kprintfln ("Failed to build memory map. Too many entries.");
+  return;
 }

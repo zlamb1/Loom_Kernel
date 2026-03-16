@@ -28,6 +28,8 @@ SECTIONS {
         *(.bss*)
     }
 
+    __phys_end = . - __virt_base + __phys_base;
+
     /DISCARD/ : {
         *(.eh_frame*)
     }
