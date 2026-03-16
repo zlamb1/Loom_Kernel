@@ -88,10 +88,12 @@ gfx_console_write (void *data, uint n, const char *s)
   if (!console->tw || !console->th)
     return 0;
 
-  byte rgb[3] = { 0 };
-  rgb[console->red_mask_shift / 8] = 18;
-  rgb[console->green_mask_shift / 8] = 212;
-  rgb[console->blue_mask_shift / 8] = 186;
+  byte rgb[3] = { 0, 225, 225 };
+
+  u32 bg = 0;
+  u32 fg = (rgb[0] << console->red_mask_shift)
+           | (rgb[1] << console->green_mask_shift)
+           | (rgb[2] << console->blue_mask_shift);
 
   while (count < n)
     {
@@ -116,10 +118,10 @@ gfx_console_write (void *data, uint n, const char *s)
             {
               if ((gx & 7) == 0)
                 pixels = glyph_data[gy * bpr + (gx >> 3)];
-              auto clear = (pixels & 0x80) > 0;
-              framebuffer[index] = rgb[0] * clear;
-              framebuffer[index + 1] = rgb[1] * clear;
-              framebuffer[index + 2] = rgb[2] * clear;
+              auto color = (pixels & 0x80) > 0 ? fg : bg;
+              framebuffer[index] = color;
+              framebuffer[index + 1] = color >> 8;
+              framebuffer[index + 2] = color >> 16;
             }
         }
 
