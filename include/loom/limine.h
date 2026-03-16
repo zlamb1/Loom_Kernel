@@ -1,3 +1,4 @@
+#include "loom/console.h"
 #ifndef LOOM_LIMINE_H
 #define LOOM_LIMINE_H 1
 
@@ -137,11 +138,23 @@ bool limine_get_framebuffers (u64                         *framebuffer_count,
                               struct limine_framebuffer ***framebuffers);
 
 static inline struct console *
-early_limine_gfx_console_create (struct limine_framebuffer *framebuffer)
+early_limine_gfx_console_create (struct limine_framebuffer *fb)
 {
-  return early_gfx_console_create (framebuffer->address, framebuffer->width,
-                                   framebuffer->height, framebuffer->pitch,
-                                   framebuffer->bpp);
+  struct fb_desc desc = {
+    .address = fb->address,
+    .width = fb->width,
+    .height = fb->height,
+    .stride = fb->pitch,
+    .bpp = fb->bpp,
+    .red_mask_size = fb->red_mask_size,
+    .red_mask_shift = fb->red_mask_shift,
+    .green_mask_size = fb->green_mask_size,
+    .green_mask_shift = fb->green_mask_shift,
+    .blue_mask_size = fb->blue_mask_size,
+    .blue_mask_shift = fb->blue_mask_shift,
+  };
+
+  return early_gfx_console_create (desc);
 }
 
 bool limine_get_boot_time (timestamp *ts);

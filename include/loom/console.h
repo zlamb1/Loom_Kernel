@@ -9,8 +9,22 @@ struct console
   void *data;
 };
 
-struct console *early_gfx_console_create (u8 *address, u32 width, u32 height,
-                                          u32 stride, u32 bpp);
+struct fb_desc
+{
+  u8 *address;
+  u32 width;
+  u32 height;
+  u32 stride;
+  u32 bpp;
+  u8  red_mask_size;
+  u8  red_mask_shift;
+  u8  green_mask_size;
+  u8  green_mask_shift;
+  u8  blue_mask_size;
+  u8  blue_mask_shift;
+};
+
+struct console *early_gfx_console_create (struct fb_desc desc);
 
 static inline uint
 console_write (struct console *console, uint n, const char *s)

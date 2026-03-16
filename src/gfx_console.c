@@ -1,11 +1,16 @@
+#include "loom/compiler.h"
 #include "loom/console.h"
 #include "loom/font.h"
+#include "loom/types.h"
 
 struct gfx_console
 {
   struct console super;
   u8            *address;
   u32            x, y, w, h, stride, bpp, tw, th, lpad, tpad;
+  u8             red_mask_size, red_mask_shift;
+  u8             green_mask_size, green_mask_shift;
+  u8             blue_mask_size, blue_mask_shift;
   struct font    font;
 };
 
@@ -83,6 +88,11 @@ gfx_console_write (void *data, uint n, const char *s)
   if (!console->tw || !console->th)
     return 0;
 
+  byte rgb[3] = { 0 };
+  rgb[console->red_mask_shift / 8] = 18;
+  rgb[console->green_mask_shift / 8] = 212;
+  rgb[console->blue_mask_shift / 8] = 186;
+
   while (count < n)
     {
       b = s[count++];
@@ -106,10 +116,10 @@ gfx_console_write (void *data, uint n, const char *s)
             {
               if ((gx & 7) == 0)
                 pixels = glyph_data[gy * bpr + (gx >> 3)];
-              auto color = 255 * ((pixels & 0x80) > 0);
-              framebuffer[index] = color;
-              framebuffer[index + 1] = color;
-              framebuffer[index + 2] = color;
+              auto clear = (pixels & 0x80) > 0;
+              framebuffer[index] = rgb[0] * clear;
+              framebuffer[index + 1] = rgb[1] * clear;
+              framebuffer[index + 2] = rgb[2] * clear;
             }
         }
 
@@ -122,28 +132,44 @@ gfx_console_write (void *data, uint n, const char *s)
   return count;
 }
 
-struct console *
-early_gfx_console_create (u8 *address, u32 width, u32 height, u32 stride,
-                          u32 bpp)
+static inline bool force_inline
+validate_mask (u8 size, u8 shift, u32 bpp)
 {
-  if (address == null || !width || !height || !stride
-      || (bpp != 24 && bpp != 32) || !console_font_get (&console.font))
+  return size == 8 && (shift % 8) == 0 && shift < bpp;
+}
+
+struct console *
+early_gfx_console_create (struct fb_desc desc)
+{
+  if (desc.address == null || !desc.width || !desc.height || !desc.stride
+      || (desc.bpp != 24 && desc.bpp != 32)
+      || !validate_mask (desc.red_mask_size, desc.red_mask_shift, desc.bpp)
+      || !validate_mask (desc.green_mask_size, desc.green_mask_shift, desc.bpp)
+      || !validate_mask (desc.blue_mask_size, desc.blue_mask_shift, desc.bpp)
+      || !console_font_get (&console.font))
     return null;
 
   console.super.write = gfx_console_write;
   console.super.data = &console;
 
-  console.address = address;
+  console.address = desc.address;
   console.x = 0;
   console.y = 0;
-  console.w = width;
-  console.h = height;
-  console.stride = stride;
-  console.bpp = bpp;
-  console.tw = width / console.font.glyph_width;
-  console.th = height / console.font.glyph_height;
-  console.lpad = (width % console.font.glyph_width) >> 1;
-  console.tpad = (height % console.font.glyph_height) >> 1;
+  console.w = desc.width;
+  console.h = desc.height;
+  console.stride = desc.stride;
+  console.bpp = desc.bpp;
+  console.tw = desc.width / console.font.glyph_width;
+  console.th = desc.height / console.font.glyph_height;
+  console.lpad = (desc.width % console.font.glyph_width) >> 1;
+  console.tpad = (desc.height % console.font.glyph_height) >> 1;
+
+  console.red_mask_size = desc.red_mask_size;
+  console.red_mask_shift = desc.red_mask_shift;
+  console.green_mask_size = desc.green_mask_size;
+  console.green_mask_shift = desc.green_mask_shift;
+  console.blue_mask_size = desc.blue_mask_size;
+  console.blue_mask_shift = desc.blue_mask_shift;
 
   return &console.super;
 }
