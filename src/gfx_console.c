@@ -171,10 +171,28 @@ early_gfx_console_create (struct fb_desc desc)
   console.h = desc.height;
   console.stride = desc.stride;
   console.bpp = desc.bpp;
-  console.tw = desc.width / console.font.glyph_width;
-  console.th = desc.height / console.font.glyph_height;
-  console.lpad = (desc.width % console.font.glyph_width) >> 1;
-  console.tpad = (desc.height % console.font.glyph_height) >> 1;
+
+  auto font = console.font;
+
+  auto border_size = font.glyph_height;
+
+  console.tw = desc.width / font.glyph_width;
+  console.th = desc.height / font.glyph_height;
+  console.lpad = console.tpad = 0;
+
+  if (desc.width > border_size
+      && (desc.width - border_size) / font.glyph_width >= 8
+      && desc.height > border_size
+      && (desc.height - border_size) / font.glyph_height >= 8)
+    {
+      console.tw -= 2;
+      console.th -= 2;
+      console.lpad += border_size;
+      console.tpad += border_size;
+    }
+
+  console.lpad += (desc.width % console.font.glyph_width) >> 1;
+  console.tpad += (desc.height % console.font.glyph_height) >> 1;
 
   console.red_mask_size = desc.red_mask_size;
   console.red_mask_shift = desc.red_mask_shift;
