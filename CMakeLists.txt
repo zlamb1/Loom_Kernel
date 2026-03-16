@@ -40,7 +40,10 @@ add_dependencies(limine Limine)
 set_target_properties(limine PROPERTIES IMPORTED_LOCATION "${LIMINE_BINARY}")
 
 set(SRCDIR "${CMAKE_CURRENT_LIST_DIR}/src")
-set(SRCS ${SRCDIR}/font.c ${SRCDIR}/gfx_console.c ${SRCDIR}/limine.c ${SRCDIR}/main.c ${SRCDIR}/print.c ${SRCDIR}/time.c)
+set(SRCS 
+    ${SRCDIR}/font.c ${SRCDIR}/gfx_console.c ${SRCDIR}/limine.c 
+    ${SRCDIR}/main.c ${SRCDIR}/print.c ${SRCDIR}/mmap.c
+    ${SRCDIR}/time.c)
 set(LINKER_SCRIPT ${SRCDIR}/loom.ld)
 
 set(LOOM_FONT_DIR "${CMAKE_CURRENT_LIST_DIR}/fonts")

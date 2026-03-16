@@ -15,6 +15,9 @@
 #define LIMINE_FRAMEBUFFER_REQUEST_ID                                         \
   { LIMINE_COMMON_MAGIC, 0x9d5827dcd881dd75, 0xa3148604f6fab11b }
 
+#define LIMINE_MEMMAP_REQUEST_ID                                              \
+  { LIMINE_COMMON_MAGIC, 0x67cf3d9d378a806f, 0xe304acdfc50c3c62 }
+
 #define LIMINE_DATE_AT_BOOT_REQUEST_ID                                        \
   { LIMINE_COMMON_MAGIC, 0x502746e184c088aa, 0xfbc5ec83e6327893 }
 
@@ -85,6 +88,36 @@ struct limine_video_mode
   u8  green_mask_shift;
   u8  blue_mask_size;
   u8  blue_mask_shift;
+};
+
+struct limine_memmap_request
+{
+  u64                            id[4];
+  u64                            revision;
+  struct limine_memmap_response *response;
+};
+
+struct limine_memmap_response
+{
+  u64                          revision;
+  u64                          entry_count;
+  struct limine_memmap_entry **entries;
+};
+
+struct limine_memmap_entry
+{
+  u64 base;
+  u64 length;
+#define LIMINE_MEMMAP_USABLE                 0
+#define LIMINE_MEMMAP_RESERVED               1
+#define LIMINE_MEMMAP_ACPI_RECLAIMABLE       2
+#define LIMINE_MEMMAP_ACPI_NVS               3
+#define LIMINE_MEMMAP_BAD_MEMORY             4
+#define LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE 5
+#define LIMINE_MEMMAP_EXECUTABLE_AND_MODULES 6
+#define LIMINE_MEMMAP_FRAMEBUFFER            7
+#define LIMINE_MEMMAP_RESERVED_MAPPED        8
+  u64 type;
 };
 
 struct limine_date_at_boot_request
