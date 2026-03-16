@@ -5,8 +5,14 @@ SECTIONS {
     __phys_base = 0x100000;
 
     . = __virt_base;
+    
+    .limine : AT(__phys_base) {
+        *(.limine*)
+    }
+    
+    . = ALIGN(0x1000);
 
-    .text : AT(__phys_base) {
+    .text : {
         *(.text*)
     }
 

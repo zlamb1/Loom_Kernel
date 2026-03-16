@@ -67,7 +67,7 @@ add_executable(loom_elf ${SRCS})
 set_target_properties(loom_elf PROPERTIES OUTPUT_NAME "loom.elf")
 set_target_properties(loom_elf PROPERTIES LINK_DEPENDS ${LINKER_SCRIPT})
 
-target_compile_options(loom_elf PRIVATE "-g")
+target_compile_options(loom_elf PRIVATE -g -O3)
 target_include_directories(loom_elf PRIVATE "include")
 target_link_libraries(loom_elf ${CONSOLE_FONT_BINARY})
 target_link_options(loom_elf PRIVATE "-T${LINKER_SCRIPT}")

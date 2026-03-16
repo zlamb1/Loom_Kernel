@@ -79,7 +79,7 @@ gfx_console_write (void *data, uint n, const char *s)
   uint count = 0;
   byte b;
 
-  auto framebuffer = console->address;
+  auto fb = console->address;
   auto bpp = (console->bpp + 7) / 8;
 
   auto font = console->font;
@@ -87,6 +87,8 @@ gfx_console_write (void *data, uint n, const char *s)
 
   if (!console->tw || !console->th)
     return 0;
+
+  bool aligned = console->bpp == 32 && !(((uintptr) fb) & 3);
 
   byte rgb[3] = { 0, 225, 225 };
 
@@ -119,9 +121,17 @@ gfx_console_write (void *data, uint n, const char *s)
               if ((gx & 7) == 0)
                 pixels = glyph_data[gy * bpr + (gx >> 3)];
               auto color = (pixels & 0x80) > 0 ? fg : bg;
-              framebuffer[index] = color;
-              framebuffer[index + 1] = color >> 8;
-              framebuffer[index + 2] = color >> 16;
+              if (aligned)
+                {
+                  auto pixel = (u32 *) (fb + index);
+                  *pixel = color;
+                }
+              else
+                {
+                  fb[index] = color;
+                  fb[index + 1] = color >> 8;
+                  fb[index + 2] = color >> 16;
+                }
             }
         }
 

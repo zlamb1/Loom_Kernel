@@ -2,26 +2,31 @@
 #include "loom/mmap.h"
 #include "loom/time.h"
 
-static used u64 start_marker[4] = LIMINE_REQUESTS_START_MARKER;
+// Prevent the compiler from reordering markers/requests by wrapping in a
+// struct.
 
-static used struct limine_framebuffer_request framebuffer_request
-    = { .id = LIMINE_FRAMEBUFFER_REQUEST_ID };
-
-static used struct limine_memmap_request memmap_request
-    = { .id = LIMINE_MEMMAP_REQUEST_ID };
-
-static used struct limine_date_at_boot_request date_at_boot_request
-    = { .id = LIMINE_DATE_AT_BOOT_REQUEST_ID };
-
-static used u64 end_marker[4] = LIMINE_REQUESTS_END_MARKER;
+struct
+{
+  u64                                start_marker[4];
+  struct limine_framebuffer_request  fb;
+  struct limine_memmap_request       memmap;
+  struct limine_date_at_boot_request date_at_boot;
+  u64                                end_marker[4];
+} static volatile used section (".limine") requests = {
+  .start_marker = LIMINE_REQUESTS_START_MARKER,
+  .fb = { .id = LIMINE_FRAMEBUFFER_REQUEST_ID },
+  .memmap = { .id = LIMINE_MEMMAP_REQUEST_ID },
+  .date_at_boot = { .id = LIMINE_DATE_AT_BOOT_REQUEST_ID },
+  .end_marker = LIMINE_REQUESTS_END_MARKER,
+};
 
 bool
 limine_get_framebuffers (u64                         *framebuffer_count,
                          struct limine_framebuffer ***framebuffers)
 {
-  if (framebuffer_request.response == null)
+  if (requests.fb.response == null)
     return false;
-  auto response = framebuffer_request.response;
+  auto response = requests.fb.response;
   *framebuffer_count = response->framebuffer_count;
   *framebuffers = response->framebuffers;
   return true;
@@ -30,9 +35,9 @@ limine_get_framebuffers (u64                         *framebuffer_count,
 bool
 limine_get_boot_time (timestamp *ts)
 {
-  if (date_at_boot_request.response == null)
+  if (requests.date_at_boot.response == null)
     return false;
-  *ts = date_at_boot_request.response->timestamp;
+  *ts = requests.date_at_boot.response->timestamp;
   return true;
 }
 
@@ -60,10 +65,10 @@ limine_memmap_iterate (mmap_iterator_hook hook, void *ctx)
 {
   int retval;
 
-  if (memmap_request.response == null)
+  if (requests.memmap.response == null)
     return 0;
 
-  auto response = memmap_request.response;
+  auto response = requests.memmap.response;
 
   for (uint i = 0; i < response->entry_count; ++i)
     {
