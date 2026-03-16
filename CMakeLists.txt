@@ -43,7 +43,7 @@ set(SRCDIR "${CMAKE_CURRENT_LIST_DIR}/src")
 set(SRCS 
     ${SRCDIR}/font.c ${SRCDIR}/gfx_console.c ${SRCDIR}/limine.c 
     ${SRCDIR}/main.c ${SRCDIR}/print.c ${SRCDIR}/mmap.c
-    ${SRCDIR}/time.c)
+    ${SRCDIR}/sync.c ${SRCDIR}/time.c)
 set(LINKER_SCRIPT ${SRCDIR}/loom.ld)
 
 set(LOOM_FONT_DIR "${CMAKE_CURRENT_LIST_DIR}/fonts")
