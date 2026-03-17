@@ -26,7 +26,7 @@ writeMsr (u32 msr_id, u64 value)
 static inline void force_inline
 cpuHalt (void)
 {
-  __asm__ volatile ("halt" ::: "memory");
+  __asm__ volatile ("hlt" ::: "memory");
 }
 
 static inline u64 force_inline
@@ -44,7 +44,7 @@ cpuRelax (void)
 static inline void force_inline
 cpuStop (void)
 {
-  __asm__ volatile ("cli; halt" ::: "memory");
+  __asm__ volatile ("cli; hlt" ::: "memory");
 }
 
 static inline void force_inline

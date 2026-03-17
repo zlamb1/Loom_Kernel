@@ -114,7 +114,7 @@ limineMpMain (struct limine_mp_info *info)
 {
   writeCpuHandle (info->lapic_id);
   auto func = (mp_bootstrap_func) info->extra_argument;
-  func (info->lapic_id);
+  func ();
 }
 
 struct boot_info

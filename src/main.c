@@ -9,7 +9,7 @@
 static atomic bool mpPause = true;
 
 noreturn void
-mpMain (cpu_handle handle)
+mpMain (void)
 {
   while (atomic_load_explicit (&mpPause, memory_order_relaxed))
     cpuRelax ();
