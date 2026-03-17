@@ -1,4 +1,4 @@
-ENTRY(loom_main)
+ENTRY(loomMain)
 
 SECTIONS {
     __virt_base = 0xffffffff80000000;

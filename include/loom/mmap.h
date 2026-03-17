@@ -28,6 +28,6 @@ struct mmap
 extern const char *memory_type_names[MEMORY_TYPE_MAX_VALUE + 1];
 extern struct mmap mmap;
 
-void mmap_init (mmap_iterator iterator);
+void mmapInit (mmap_iterator iterator);
 
 #endif

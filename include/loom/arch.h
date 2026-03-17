@@ -5,7 +5,7 @@
 #include "loom/types.h"
 
 static inline void force_inline
-cpu_relax (void)
+cpuRelax (void)
 {
   __asm__ volatile ("pause");
 }
@@ -23,7 +23,7 @@ cli (void)
 }
 
 static inline ulong force_inline
-irq_save (void)
+irqSave (void)
 {
   ulong flags;
   __asm__ volatile ("pushfq; popq %0; cli" : "=rm"(flags)::"memory");
@@ -31,7 +31,7 @@ irq_save (void)
 }
 
 static inline void force_inline
-irq_restore (ulong flags)
+irqRestore (ulong flags)
 {
   __asm__ volatile ("pushq %0; popfq" ::"rm"(flags) : "memory");
 }

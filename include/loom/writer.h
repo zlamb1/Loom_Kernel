@@ -12,25 +12,25 @@ struct writer
 };
 
 static inline uint
-write_nil (void *data, uint n, const char *s)
+writeNil (void *data, uint n, const char *s)
 {
   return n;
 }
 
 static inline uint
-write_char (struct writer writer, char ch)
+writeChar (struct writer writer, char ch)
 {
   return writer.write (writer.data, 1, &ch);
 }
 
 static inline uint
-write_str (struct writer writer, uint n, const char *s)
+writeStr (struct writer writer, uint n, const char *s)
 {
   return writer.write (writer.data, n, s);
 }
 
 static inline uint
-write_cstr (struct writer writer, const char *s)
+writeCStr (struct writer writer, const char *s)
 {
   uint n = 0;
   while (s[n] != '\0')
@@ -39,7 +39,7 @@ write_cstr (struct writer writer, const char *s)
 }
 
 static inline uint
-write_pad (struct writer writer, uint repeat, char ch)
+writePad (struct writer writer, uint repeat, char ch)
 {
 #define CAP 64
   char buf[CAP];
@@ -53,7 +53,7 @@ write_pad (struct writer writer, uint repeat, char ch)
       uint write = CAP;
       if (repeat < write)
         write = repeat;
-      written += write_str (writer, write, buf);
+      written += writeStr (writer, write, buf);
       repeat -= write;
     }
 

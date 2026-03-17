@@ -27,7 +27,7 @@ const char *abbrev_month_names[12] = {
 };
 
 static inline bool force_inline
-is_leap_year (int year)
+isLeapYear (int year)
 {
   if (year & 3)
     return false;
@@ -39,7 +39,7 @@ is_leap_year (int year)
 }
 
 struct datetime
-mk_datetime (timestamp ts)
+mkDatetime (timestamp ts)
 {
   struct datetime datetime;
   i64             days = ts / SECONDS_PER_DAY;
@@ -59,7 +59,7 @@ mk_datetime (timestamp ts)
         {
           next = year - 1;
           seconds
-              = is_leap_year (next) ? SECONDS_PER_LEAP_YEAR : SECONDS_PER_YEAR;
+              = isLeapYear (next) ? SECONDS_PER_LEAP_YEAR : SECONDS_PER_YEAR;
 
           if (-ts < seconds)
             break;
@@ -79,7 +79,7 @@ mk_datetime (timestamp ts)
     for (;;)
       {
         auto seconds
-            = is_leap_year (year) ? SECONDS_PER_LEAP_YEAR : SECONDS_PER_YEAR;
+            = isLeapYear (year) ? SECONDS_PER_LEAP_YEAR : SECONDS_PER_YEAR;
 
         if (ts < seconds)
           break;
@@ -88,7 +88,7 @@ mk_datetime (timestamp ts)
         year += 1;
       }
 
-  leap = is_leap_year (year);
+  leap = isLeapYear (year);
 
   // Jan. 1 1970 = Thursday
   auto week_day = (4 + days) % 7;
@@ -127,15 +127,15 @@ mk_datetime (timestamp ts)
 }
 
 uint
-ts_wprintf (struct writer writer, timestamp ts, const char *fmt)
+tsFormat (struct writer writer, timestamp ts, const char *fmt)
 {
   uint n = 0, i = 0;
 
-  struct datetime dt = mk_datetime (ts);
-  auto            hour_12 = ((dt.hour + 11) % 12) + 1;
+  auto dt = mkDatetime (ts);
+  auto hour_12 = ((dt.hour + 11) % 12) + 1;
 
   if (writer.write == null)
-    writer.write = write_nil;
+    writer.write = writeNil;
 
   for (;; ++i)
     {
@@ -146,7 +146,7 @@ ts_wprintf (struct writer writer, timestamp ts, const char *fmt)
         b = fmt[++i];
 
       if (start < i)
-        n += write_str (writer, i - start, fmt + start);
+        n += writeStr (writer, i - start, fmt + start);
 
       if (fmt[i] == '\0')
         break;
@@ -155,66 +155,66 @@ ts_wprintf (struct writer writer, timestamp ts, const char *fmt)
 
       if (b == '%')
         {
-          n += write_char (writer, '%');
+          n += writeChar (writer, '%');
           continue;
         }
 
       switch (b)
         {
         case 'n':
-          n += write_char (writer, '\n');
+          n += writeChar (writer, '\n');
           break;
         case 'Y':
-          n += wprintf (writer, "%.2i", dt.year);
+          n += wLog (writer, "%.2i", dt.year);
           break;
         case 'y':
-          n += wprintf (writer, "%.2i", dt.year % 100);
+          n += wLog (writer, "%.2i", dt.year % 100);
           break;
         case 'C':
-          n += wprintf (writer, "%.2i", dt.year / 100);
+          n += wLog (writer, "%.2i", dt.year / 100);
           break;
         case 'b':
         case 'h':
-          n += wprintf (writer, "%s", abbrev_month_names[dt.month]);
+          n += wLog (writer, "%s", abbrev_month_names[dt.month]);
           break;
         case 'B':
-          n += wprintf (writer, "%s", month_names[dt.month]);
+          n += wLog (writer, "%s", month_names[dt.month]);
           break;
         case 'm':
-          n += wprintf (writer, "%u", dt.month + 1);
+          n += wLog (writer, "%u", dt.month + 1);
           break;
         case 'j':
-          n += wprintf (writer, "%u", dt.year_day + 1);
+          n += wLog (writer, "%u", dt.year_day + 1);
           break;
         case 'd':
-          n += wprintf (writer, "%u", dt.month_day + 1);
+          n += wLog (writer, "%u", dt.month_day + 1);
           break;
         case 'e':
-          n += wprintf (writer, "%2u", dt.month_day + 1);
+          n += wLog (writer, "%2u", dt.month_day + 1);
           break;
         case 'A':
-          n += wprintf (writer, "%s", week_day_names[dt.week_day]);
+          n += wLog (writer, "%s", week_day_names[dt.week_day]);
           break;
         case 'w':
-          n += wprintf (writer, "%u", dt.week_day);
+          n += wLog (writer, "%u", dt.week_day);
           break;
         case 'H':
-          n += wprintf (writer, "%.2u", dt.hour);
+          n += wLog (writer, "%.2u", dt.hour);
           break;
         case 'I':
-          n += wprintf (writer, "%.2u", hour_12);
+          n += wLog (writer, "%.2u", hour_12);
           break;
         case 'M':
-          n += wprintf (writer, "%.2u", dt.min);
+          n += wLog (writer, "%.2u", dt.min);
           break;
         case 'S':
-          n += wprintf (writer, "%.2u", dt.sec);
+          n += wLog (writer, "%.2u", dt.sec);
           break;
         case 'p':
-          n += wprintf (writer, "%s", dt.hour >= 12 ? "p.m." : "a.m.");
+          n += wLog (writer, "%s", dt.hour >= 12 ? "p.m." : "a.m.");
           break;
         case 'P':
-          n += wprintf (writer, "%s", dt.hour >= 12 ? "PM" : "AM");
+          n += wLog (writer, "%s", dt.hour >= 12 ? "PM" : "AM");
           break;
         }
     }

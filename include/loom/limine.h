@@ -134,11 +134,11 @@ struct limine_date_at_boot_response
   i64 timestamp;
 };
 
-bool limine_get_framebuffers (u64                         *framebuffer_count,
-                              struct limine_framebuffer ***framebuffers);
+bool limineGetFramebuffers (u64                         *framebuffer_count,
+                            struct limine_framebuffer ***framebuffers);
 
 static inline struct console *
-early_limine_gfx_console_create (struct limine_framebuffer *fb)
+earlyLimineGfxConsoleCreate (struct limine_framebuffer *fb)
 {
   struct fb_desc desc = {
     .address = fb->address,
@@ -154,11 +154,11 @@ early_limine_gfx_console_create (struct limine_framebuffer *fb)
     .blue_mask_shift = fb->blue_mask_shift,
   };
 
-  return early_gfx_console_create (desc);
+  return earlyGfxConsoleCreate (desc);
 }
 
-bool limine_get_boot_time (timestamp *ts);
+bool limineGetBootTime (timestamp *ts);
 
-struct boot_info limine_early_boot (void);
+struct boot_info limineEarlyBoot (void);
 
 #endif

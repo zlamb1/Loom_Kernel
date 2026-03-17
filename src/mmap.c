@@ -30,8 +30,8 @@ const char *memory_type_names[MEMORY_TYPE_MAX_VALUE + 1] = {
 
 struct mmap mmap = { 0 };
 
-static int
-_build_mmap (uint evt_count, struct mem_event *evts)
+static inline int
+buildMmap (uint evt_count, struct mem_event *evts)
 {
   u64  pos = 0;
   int  primary_type = -1;
@@ -130,7 +130,7 @@ _build_mmap (uint evt_count, struct mem_event *evts)
 }
 
 int
-mmap_evt_hook (u64 start, u64 length, uint type, void *p)
+mmapEventHook (u64 start, u64 length, uint type, void *p)
 {
   auto ctx = (struct evt_hook_ctx *) p;
 
@@ -170,7 +170,7 @@ mmap_evt_hook (u64 start, u64 length, uint type, void *p)
 }
 
 void
-mmap_init (mmap_iterator iterator)
+mmapInit (mmap_iterator iterator)
 {
   struct mem_event    evts[EVTS_SIZE];
   struct evt_hook_ctx ctx = { .evts = evts };
@@ -178,23 +178,23 @@ mmap_init (mmap_iterator iterator)
   auto phys_base = (uintptr) &__phys_base;
   auto phys_end = (uintptr) &__phys_end;
 
-  if (mmap_evt_hook (phys_base, phys_end - phys_base, MEMORY_TYPE_RESERVED,
+  if (mmapEventHook (phys_base, phys_end - phys_base, MEMORY_TYPE_RESERVED,
                      &ctx))
     goto fail;
 
-  if (iterator (mmap_evt_hook, &ctx) || _build_mmap (ctx.count, evts))
+  if (iterator (mmapEventHook, &ctx) || buildMmap (ctx.count, evts))
     goto fail;
 
   for (uint i = 0; i < mmap.count; ++i)
     {
       auto region = mmap.regions[i];
-      kprintfln ("Memory Region: %#.16x64 -> %#-.16x64 [%s]", region.start,
-                 region.start + region.length, memory_type_names[region.type]);
+      kLogLn ("Memory Region: %#.16x64 -> %#-.16x64 [%s]", region.start,
+              region.start + region.length, memory_type_names[region.type]);
     }
 
   return;
 
 fail:
-  kprintfln ("Failed to build memory map. Too many entries.");
+  kLogLn ("Failed to build memory map. Too many entries.");
   return;
 }

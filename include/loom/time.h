@@ -20,21 +20,21 @@ struct datetime
   int  year;
 };
 
-struct datetime mk_datetime (timestamp ts);
+struct datetime mkDatetime (timestamp ts);
 
-uint ts_wprintf (struct writer writer, timestamp ts, const char *fmt);
+uint tsFormat (struct writer writer, timestamp ts, const char *fmt);
 
 static inline uint
-ts_kprintf (timestamp ts, const char *fmt)
+tsLog (timestamp ts, const char *fmt)
 {
-  return ts_wprintf (get_print_writer (), ts, fmt);
+  return tsFormat (getPrintWriter (), ts, fmt);
 }
 
 static inline uint
-ts_kprintfln (timestamp ts, const char *fmt)
+tsLogLn (timestamp ts, const char *fmt)
 {
-  auto w = get_print_writer ();
-  return ts_wprintf (w, ts, fmt) + wprintf (w, "\n");
+  auto w = getPrintWriter ();
+  return tsFormat (w, ts, fmt) + wLog (w, "\n");
 }
 
 #endif

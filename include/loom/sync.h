@@ -13,25 +13,24 @@ struct tspinlock
 
 typedef struct tspinlock spinlock;
 
-#define spin_lock_irq(lock, flags)                                            \
+#define spinLockIrq(lock, flags)                                              \
   do                                                                          \
     {                                                                         \
-      flags = irq_save ();                                                    \
-      spin_lock (lock);                                                       \
+      flags = irqSave ();                                                     \
+      spinLock (lock);                                                        \
     }                                                                         \
   while (0)
 
-#define spin_unlock_irq(lock, flags)                                          \
+#define spinUnlockIrq(lock, flags)                                            \
   do                                                                          \
     {                                                                         \
-      spin_unlock (lock);                                                     \
-      irq_restore (flags);                                                    \
+      spinUnlock (lock);                                                      \
+      irqRestore (flags);                                                     \
     }                                                                         \
   while (0)
 
-void spin_lock (spinlock *lock);
-bool spin_trylock (spinlock *lock);
-
-void spin_unlock (spinlock *lock);
+void spinLock (spinlock *lock);
+bool spinTryLock (spinlock *lock);
+void spinUnlock (spinlock *lock);
 
 #endif

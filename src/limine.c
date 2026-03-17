@@ -1,5 +1,6 @@
 #include "loom/limine.h"
 #include "loom/mmap.h"
+#include "loom/print.h"
 #include "loom/time.h"
 
 // Prevent the compiler from reordering markers/requests by wrapping in a
@@ -21,8 +22,8 @@ struct
 };
 
 bool
-limine_get_framebuffers (u64                         *framebuffer_count,
-                         struct limine_framebuffer ***framebuffers)
+limineGetFramebuffers (u64                         *framebuffer_count,
+                       struct limine_framebuffer ***framebuffers)
 {
   if (requests.fb.response == null)
     return false;
@@ -33,7 +34,7 @@ limine_get_framebuffers (u64                         *framebuffer_count,
 }
 
 bool
-limine_get_boot_time (timestamp *ts)
+limineGetBootTime (timestamp *ts)
 {
   if (requests.date_at_boot.response == null)
     return false;
@@ -42,13 +43,13 @@ limine_get_boot_time (timestamp *ts)
 }
 
 static void
-kprint_init (void)
+printInit (void)
 {
   u64                         framebuffer_count;
   struct limine_framebuffer **framebuffers;
   struct limine_framebuffer  *framebuffer;
 
-  if (!limine_get_framebuffers (&framebuffer_count, &framebuffers)
+  if (!limineGetFramebuffers (&framebuffer_count, &framebuffers)
       || !framebuffer_count)
     return;
 
@@ -56,12 +57,12 @@ kprint_init (void)
   if (framebuffer == null)
     return;
 
-  auto early_console = early_limine_gfx_console_create (framebuffer);
-  set_print_console (early_console);
+  auto early_console = earlyLimineGfxConsoleCreate (framebuffer);
+  setPrintConsole (early_console);
 }
 
 static int
-limine_memmap_iterate (mmap_iterator_hook hook, void *ctx)
+limineMmapIterate (mmap_iterator_hook hook, void *ctx)
 {
   int retval;
 
@@ -96,14 +97,14 @@ limine_memmap_iterate (mmap_iterator_hook hook, void *ctx)
 }
 
 struct boot_info
-limine_early_boot (void)
+limineEarlyBoot (void)
 {
   struct boot_info bi;
 
-  kprint_init ();
+  printInit ();
 
-  bi.boot_time_set = limine_get_boot_time (&bi.boot_time);
-  bi.mmap_iterator = limine_memmap_iterate;
+  bi.boot_time_set = limineGetBootTime (&bi.boot_time);
+  bi.mmap_iterator = limineMmapIterate;
 
   return bi;
 }

@@ -7,15 +7,15 @@
 #include "loom/console.h"
 #include "loom/writer.h"
 
-struct console *get_print_console (void);
-void            set_print_console (struct console *);
+struct console *getPrintConsole (void);
+void            setPrintConsole (struct console *);
 
-uint vwprintf (struct writer writer, const char *fmt, va_list args);
+uint vwLog (struct writer writer, const char *fmt, va_list args);
 
 static inline struct writer
-get_print_writer (void)
+getPrintWriter (void)
 {
-  struct console *print_console = get_print_console ();
+  struct console *print_console = getPrintConsole ();
   struct writer   writer = { 0 };
 
   if (print_console != null)
@@ -28,63 +28,63 @@ get_print_writer (void)
 }
 
 static inline uint
-wprintf (struct writer writer, const char *fmt, ...)
+wLog (struct writer writer, const char *fmt, ...)
 {
   uint    n;
   va_list args;
   va_start (args, fmt);
-  n = vwprintf (writer, fmt, args);
+  n = vwLog (writer, fmt, args);
   va_end (args);
   return n;
 }
 
 static inline uint force_inline
-vwprintfln (struct writer writer, const char *fmt, va_list args)
+vwLogLn (struct writer writer, const char *fmt, va_list args)
 {
-  return vwprintf (writer, fmt, args) + wprintf (writer, "\n");
+  return vwLog (writer, fmt, args) + wLog (writer, "\n");
 }
 
 static inline uint
-wprintfln (struct writer writer, const char *fmt, ...)
+wLogLn (struct writer writer, const char *fmt, ...)
 {
   uint    n;
   va_list args;
   va_start (args, fmt);
-  n = vwprintfln (writer, fmt, args);
+  n = vwLogLn (writer, fmt, args);
   va_end (args);
   return n;
 }
 
 static inline uint
-vkprintf (const char *fmt, va_list args)
+vkLog (const char *fmt, va_list args)
 {
-  return vwprintf (get_print_writer (), fmt, args);
+  return vwLog (getPrintWriter (), fmt, args);
 }
 
 static inline uint
-vkprintfln (const char *fmt, va_list args)
+vkLogLn (const char *fmt, va_list args)
 {
-  return vwprintfln (get_print_writer (), fmt, args);
+  return vwLogLn (getPrintWriter (), fmt, args);
 }
 
 static inline uint
-kprintf (const char *fmt, ...)
+kLog (const char *fmt, ...)
 {
   uint    n;
   va_list args;
   va_start (args, fmt);
-  n = vkprintf (fmt, args);
+  n = vkLog (fmt, args);
   va_end (args);
   return n;
 }
 
 static inline uint
-kprintfln (const char *fmt, ...)
+kLogLn (const char *fmt, ...)
 {
   uint    n;
   va_list args;
   va_start (args, fmt);
-  n = vkprintfln (fmt, args);
+  n = vkLogLn (fmt, args);
   va_end (args);
   return n;
 }

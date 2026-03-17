@@ -1,7 +1,6 @@
 #ifndef LOOM_FONT_H
 #define LOOM_FONT_H 1
 
-#include "loom/compiler.h"
 #include "loom/types.h"
 
 struct font
@@ -13,10 +12,10 @@ struct font
   uint glyph_height;
 };
 
-bool console_font_get (struct font *f);
+bool consoleFontGet (struct font *f);
 
 static inline u8 *
-font_glyph_data (struct font *f, uint glyph)
+fontGlyphData (struct font *f, uint glyph)
 {
   if (glyph >= f->glyph_count)
     return null;

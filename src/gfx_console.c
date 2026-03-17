@@ -17,7 +17,7 @@ struct gfx_console
 static struct gfx_console console;
 
 static inline void force_inline
-advance_line (struct gfx_console *console)
+advanceRow (struct gfx_console *console)
 {
   if (++console->y >= console->th)
     {
@@ -27,17 +27,17 @@ advance_line (struct gfx_console *console)
 }
 
 static inline void force_inline
-advance (struct gfx_console *console)
+advanceCol (struct gfx_console *console)
 {
   if (++console->x >= console->tw)
     {
       console->x = 0;
-      advance_line (console);
+      advanceRow (console);
     }
 }
 
 static inline bool force_inline
-control_codes (struct gfx_console *console, byte ch)
+handleCtrlCodes (struct gfx_console *console, byte ch)
 {
   switch (ch)
     {
@@ -62,7 +62,7 @@ control_codes (struct gfx_console *console, byte ch)
       break;
     case '\n':
       console->x = 0;
-      advance_line (console);
+      advanceRow (console);
       break;
     default:
       return false;
@@ -72,7 +72,7 @@ control_codes (struct gfx_console *console, byte ch)
 }
 
 static uint
-gfx_console_write (void *data, uint n, const char *s)
+gfxConsoleWrite (void *data, uint n, const char *s)
 {
   struct gfx_console *console = data;
 
@@ -101,14 +101,14 @@ gfx_console_write (void *data, uint n, const char *s)
     {
       b = s[count++];
 
-      if (control_codes (console, b))
+      if (handleCtrlCodes (console, b))
         continue;
 
       auto x = console->x * font.glyph_width + console->lpad;
       auto y = console->y * font.glyph_height + console->tpad;
       byte pixels;
 
-      u8 *glyph_data = font_glyph_data (&font, b);
+      u8 *glyph_data = fontGlyphData (&font, b);
       if (glyph_data == null)
         goto next;
 
@@ -136,7 +136,7 @@ gfx_console_write (void *data, uint n, const char *s)
         }
 
     next:
-      advance (console);
+      advanceCol (console);
     }
 
   __asm__ volatile ("sfence" ::: "memory");
@@ -145,23 +145,23 @@ gfx_console_write (void *data, uint n, const char *s)
 }
 
 static inline bool force_inline
-validate_mask (u8 size, u8 shift, u32 bpp)
+validateMask (u8 size, u8 shift, u32 bpp)
 {
   return size == 8 && (shift % 8) == 0 && shift < bpp;
 }
 
 struct console *
-early_gfx_console_create (struct fb_desc desc)
+earlyGfxConsoleCreate (struct fb_desc desc)
 {
   if (desc.address == null || !desc.width || !desc.height || !desc.stride
       || (desc.bpp != 24 && desc.bpp != 32)
-      || !validate_mask (desc.red_mask_size, desc.red_mask_shift, desc.bpp)
-      || !validate_mask (desc.green_mask_size, desc.green_mask_shift, desc.bpp)
-      || !validate_mask (desc.blue_mask_size, desc.blue_mask_shift, desc.bpp)
-      || !console_font_get (&console.font))
+      || !validateMask (desc.red_mask_size, desc.red_mask_shift, desc.bpp)
+      || !validateMask (desc.green_mask_size, desc.green_mask_shift, desc.bpp)
+      || !validateMask (desc.blue_mask_size, desc.blue_mask_shift, desc.bpp)
+      || !consoleFontGet (&console.font))
     return null;
 
-  console.super.write = gfx_console_write;
+  console.super.write = gfxConsoleWrite;
   console.super.data = &console;
 
   console.address = desc.address;

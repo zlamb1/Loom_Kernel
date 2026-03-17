@@ -43,13 +43,13 @@ struct va_list_arg
 static struct console *print_console = null;
 
 static inline bool force_inline
-is_digit (char ch)
+isDigit (char ch)
 {
   return ch >= '0' && ch <= '9';
 }
 
 static inline uint
-parse_flags (struct format *format, const char *fmt, byte b)
+parseFlags (struct format *format, const char *fmt, byte b)
 {
   uint n = 0;
 
@@ -88,7 +88,7 @@ parse_flags (struct format *format, const char *fmt, byte b)
 }
 
 static inline struct arg
-parse_arg (const char *fmt, struct va_list_arg *va)
+parseArg (const char *fmt, struct va_list_arg *va)
 {
   struct arg arg = { 0 };
   char       ch = fmt[0];
@@ -101,7 +101,7 @@ parse_arg (const char *fmt, struct va_list_arg *va)
       return arg;
     }
 
-  if (!is_digit (ch))
+  if (!isDigit (ch))
     return arg;
 
   arg.ok = true;
@@ -112,13 +112,13 @@ parse_arg (const char *fmt, struct va_list_arg *va)
       arg.value += ch - '0';
       ch = fmt[++arg.length];
     }
-  while (is_digit (ch));
+  while (isDigit (ch));
 
   return arg;
 }
 
 static inline struct int_size force_inline
-parse_int_size (const char *fmt)
+parseIntSize (const char *fmt)
 {
   struct int_size size = { 0 };
 
@@ -162,7 +162,7 @@ out:
 }
 
 static inline uint
-fmt_char (struct writer writer, struct format *format, char ch)
+fmtChar (struct writer writer, struct format *format, char ch)
 {
   uint written = 0, pad = 0;
 
@@ -170,18 +170,18 @@ fmt_char (struct writer writer, struct format *format, char ch)
     pad = format->width - 1;
 
   if (pad && !format->minus)
-    written += write_pad (writer, pad, ' ');
+    written += writePad (writer, pad, ' ');
 
-  written += write_char (writer, ch);
+  written += writeChar (writer, ch);
 
   if (pad && format->minus)
-    written += write_pad (writer, pad, ' ');
+    written += writePad (writer, pad, ' ');
 
   return written;
 }
 
 static inline uint
-fmt_string (struct writer writer, struct format *format, const char *s)
+fmtString (struct writer writer, struct format *format, const char *s)
 {
   uint written = 0, pad = 0, len = 0;
 
@@ -196,19 +196,19 @@ fmt_string (struct writer writer, struct format *format, const char *s)
     pad = format->width - len;
 
   if (pad && !format->minus)
-    written += write_pad (writer, pad, ' ');
+    written += writePad (writer, pad, ' ');
 
-  written += write_str (writer, len, s);
+  written += writeStr (writer, len, s);
 
   if (pad && format->minus)
-    written += write_pad (writer, pad, ' ');
+    written += writePad (writer, pad, ' ');
 
   return written;
 }
 
 static inline uint
-fmt_int (struct writer writer, struct format *format, uint base, bool _signed,
-         bool upper, u64 u)
+fmtInt (struct writer writer, struct format *format, uint base, bool _signed,
+        bool upper, u64 u)
 {
 #define CAP 64
   char buf[CAP], pbuf[8];
@@ -285,25 +285,25 @@ fmt_int (struct writer writer, struct format *format, uint base, bool _signed,
     pad = format->width - len;
 
   if (pad && !format->minus)
-    written += write_pad (writer, pad, ' ');
+    written += writePad (writer, pad, ' ');
 
   if (plen)
-    written += write_str (writer, plen, pbuf);
+    written += writeStr (writer, plen, pbuf);
 
   if (zero_pad)
-    written += write_pad (writer, zero_pad, '0');
+    written += writePad (writer, zero_pad, '0');
 
-  written += write_str (writer, digits, buf + (CAP - digits));
+  written += writeStr (writer, digits, buf + (CAP - digits));
 
   if (pad && format->minus)
-    written += write_pad (writer, pad, ' ');
+    written += writePad (writer, pad, ' ');
 
 #undef CAP
   return written;
 }
 
 static inline u64 force_inline
-_get_arg (struct va_list_arg *va, uint size, bool _signed)
+getArg (struct va_list_arg *va, uint size, bool _signed)
 {
 #define SELECT(type1, type2)                                                  \
   do                                                                          \
@@ -341,19 +341,19 @@ _get_arg (struct va_list_arg *va, uint size, bool _signed)
 }
 
 struct console *
-get_print_console (void)
+getPrintConsole (void)
 {
   return print_console;
 }
 
 void
-set_print_console (struct console *console)
+setPrintConsole (struct console *console)
 {
   print_console = console;
 }
 
 uint
-vwprintf (struct writer writer, const char *fmt, va_list args)
+vwLog (struct writer writer, const char *fmt, va_list args)
 {
   struct va_list_arg va;
   va_copy (va.args, args);
@@ -363,7 +363,7 @@ vwprintf (struct writer writer, const char *fmt, va_list args)
   struct format format;
 
   if (writer.write == null)
-    writer.write = write_nil;
+    writer.write = writeNil;
 
   for (;; ++i)
     {
@@ -383,16 +383,16 @@ vwprintf (struct writer writer, const char *fmt, va_list args)
 
       if (b == '%')
         {
-          n += write_char (writer, '%');
+          n += writeChar (writer, '%');
           continue;
         }
 
       format = (struct format) { 0 };
 
-      i += parse_flags (&format, fmt + i, b);
+      i += parseFlags (&format, fmt + i, b);
       b = fmt[i];
 
-      struct arg width_arg = parse_arg (fmt + i, &va);
+      struct arg width_arg = parseArg (fmt + i, &va);
 
       if (width_arg.ok)
         {
@@ -405,7 +405,7 @@ vwprintf (struct writer writer, const char *fmt, va_list args)
       if (b == '.')
         {
           ++i;
-          struct arg prec_arg = parse_arg (fmt + i, &va);
+          struct arg prec_arg = parseArg (fmt + i, &va);
 
           format.prec_set = true;
 
@@ -424,14 +424,14 @@ vwprintf (struct writer writer, const char *fmt, va_list args)
       switch (b)
         {
         case 'c':
-          n += fmt_char (writer, &format, va_arg (va.args, int));
+          n += fmtChar (writer, &format, va_arg (va.args, int));
           continue;
         case 's':
-          n += fmt_string (writer, &format, va_arg (va.args, const char *));
+          n += fmtString (writer, &format, va_arg (va.args, const char *));
           continue;
         case 't':
-          n += fmt_string (writer, &format,
-                           va_arg (va.args, int) ? "true" : "false");
+          n += fmtString (writer, &format,
+                          va_arg (va.args, int) ? "true" : "false");
           continue;
         case 'i':
           _signed = true;
@@ -456,8 +456,8 @@ vwprintf (struct writer writer, const char *fmt, va_list args)
           upper = true;
         case 'p':
           format.hash = !format.hash;
-          n += fmt_int (writer, &format, 16, false, upper,
-                        (uintptr) va_arg (va.args, void *));
+          n += fmtInt (writer, &format, 16, false, upper,
+                       (uintptr) va_arg (va.args, void *));
           continue;
         default:
           continue;
@@ -465,7 +465,7 @@ vwprintf (struct writer writer, const char *fmt, va_list args)
 
       if (size == SIZE_NONE && !format.bang)
         {
-          struct int_size isize = parse_int_size (fmt + i + 1);
+          struct int_size isize = parseIntSize (fmt + i + 1);
 
           if (isize.ok)
             {
@@ -474,8 +474,8 @@ vwprintf (struct writer writer, const char *fmt, va_list args)
             }
         }
 
-      n += fmt_int (writer, &format, base, _signed, upper,
-                    _get_arg (&va, size, _signed));
+      n += fmtInt (writer, &format, base, _signed, upper,
+                   getArg (&va, size, _signed));
     }
 
   va_end (va.args);

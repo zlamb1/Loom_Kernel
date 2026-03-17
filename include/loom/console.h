@@ -24,10 +24,10 @@ struct fb_desc
   u8  blue_mask_shift;
 };
 
-struct console *early_gfx_console_create (struct fb_desc desc);
+struct console *earlyGfxConsoleCreate (struct fb_desc desc);
 
 static inline uint
-console_write (struct console *console, uint n, const char *s)
+consoleWrite (struct console *console, uint n, const char *s)
 {
   if (console == null)
     return 0;

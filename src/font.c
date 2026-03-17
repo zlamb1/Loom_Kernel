@@ -20,7 +20,7 @@ struct psf2_font
 } packed;
 
 bool
-console_font_get (struct font *f)
+consoleFontGet (struct font *f)
 {
   byte *start = &_binary_consolefont_psfu_start;
   byte *end = &_binary_consolefont_psfu_end;

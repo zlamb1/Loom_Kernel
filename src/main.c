@@ -1,19 +1,20 @@
 #include "loom/limine.h"
 #include "loom/mmap.h"
 #include "loom/print.h"
+#include "loom/time.h"
 
 noreturn void
-loom_main (void)
+loomMain (void)
 {
-  auto bi = limine_early_boot ();
+  auto bi = limineEarlyBoot ();
 
-  kprintfln ("Booting...");
+  kLogLn ("Booting...");
 
   if (bi.boot_time_set)
-    ts_kprintfln (bi.boot_time, "Boot Time: %A, %B %e, %Y, %I:%M:%S %P UTC");
+    tsLogLn (bi.boot_time, "Boot Time: %A, %B %e, %Y, %I:%M:%S %P UTC");
 
   if (bi.mmap_iterator != null)
-    mmap_init (bi.mmap_iterator);
+    mmapInit (bi.mmap_iterator);
 
   for (;;)
     ;
