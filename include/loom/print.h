@@ -3,20 +3,22 @@
 
 #include <stdarg.h>
 
-#include "loom/compiler.h"
 #include "loom/console.h"
+#include "loom/sync.h"
 #include "loom/writer.h"
 
 struct console *getPrintConsole (void);
 void            setPrintConsole (struct console *);
+
+spinlock *getPrintLock (void);
 
 uint vwLog (struct writer writer, const char *fmt, va_list args);
 
 static inline struct writer
 getPrintWriter (void)
 {
-  struct console *print_console = getPrintConsole ();
-  struct writer   writer = { 0 };
+  auto          print_console = getPrintConsole ();
+  struct writer writer = { 0 };
 
   if (print_console != null)
     {
@@ -30,10 +32,9 @@ getPrintWriter (void)
 static inline uint
 wLog (struct writer writer, const char *fmt, ...)
 {
-  uint    n;
   va_list args;
   va_start (args, fmt);
-  n = vwLog (writer, fmt, args);
+  auto n = vwLog (writer, fmt, args);
   va_end (args);
   return n;
 }
@@ -47,10 +48,9 @@ vwLogLn (struct writer writer, const char *fmt, va_list args)
 static inline uint
 wLogLn (struct writer writer, const char *fmt, ...)
 {
-  uint    n;
   va_list args;
   va_start (args, fmt);
-  n = vwLogLn (writer, fmt, args);
+  auto n = vwLogLn (writer, fmt, args);
   va_end (args);
   return n;
 }
@@ -58,22 +58,29 @@ wLogLn (struct writer writer, const char *fmt, ...)
 static inline uint
 vkLog (const char *fmt, va_list args)
 {
-  return vwLog (getPrintWriter (), fmt, args);
+  auto lock = getPrintLock ();
+  auto flags = lockGetIrq (lock);
+  auto n = vwLog (getPrintWriter (), fmt, args);
+  lockPutIrq (lock, flags);
+  return n;
 }
 
 static inline uint
 vkLogLn (const char *fmt, va_list args)
 {
-  return vwLogLn (getPrintWriter (), fmt, args);
+  auto lock = getPrintLock ();
+  auto flags = lockGetIrq (lock);
+  auto n = vwLogLn (getPrintWriter (), fmt, args);
+  lockPutIrq (lock, flags);
+  return n;
 }
 
 static inline uint
 kLog (const char *fmt, ...)
 {
-  uint    n;
   va_list args;
   va_start (args, fmt);
-  n = vkLog (fmt, args);
+  auto n = vkLog (fmt, args);
   va_end (args);
   return n;
 }
@@ -81,10 +88,9 @@ kLog (const char *fmt, ...)
 static inline uint
 kLogLn (const char *fmt, ...)
 {
-  uint    n;
   va_list args;
   va_start (args, fmt);
-  n = vkLogLn (fmt, args);
+  auto n = vkLogLn (fmt, args);
   va_end (args);
   return n;
 }

@@ -41,6 +41,7 @@ struct va_list_arg
 };
 
 static struct console *print_console = null;
+static spinlock        print_lock = { 0 };
 
 static inline bool force_inline
 isDigit (char ch)
@@ -350,6 +351,12 @@ void
 setPrintConsole (struct console *console)
 {
   print_console = console;
+}
+
+spinlock *
+getPrintLock (void)
+{
+  return &print_lock;
 }
 
 uint

@@ -4,7 +4,7 @@
 #include "loom/sync.h"
 
 void
-spinLock (spinlock *lock)
+spinLockGet (spinlock *lock)
 {
   auto ticket
       = atomic_fetch_add_explicit (&lock->next, 1, memory_order_relaxed);
@@ -21,7 +21,7 @@ spinLock (spinlock *lock)
 }
 
 bool
-spinTryLock (spinlock *lock)
+spinLockTry (spinlock *lock)
 {
   auto next = atomic_load_explicit (&lock->next, memory_order_relaxed);
   auto owner = atomic_load_explicit (&lock->owner, memory_order_relaxed);
@@ -35,7 +35,7 @@ spinTryLock (spinlock *lock)
 }
 
 void
-spinUnlock (spinlock *lock)
+spinLockPut (spinlock *lock)
 {
   atomic_fetch_add_explicit (&lock->owner, 1, memory_order_release);
 }

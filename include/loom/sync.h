@@ -13,45 +13,55 @@ struct tspinlock
 
 typedef struct tspinlock spinlock;
 
-#define lockGet(lock) _Generic ((lock), spinlock *: spinLock) (lock)
-#define lockGetIrq(lock, flags)                                               \
-  _Generic ((lock), spinlock *: spinLockIrq) (lock, flags)
+#define lockGet(lock)    _Generic ((lock), spinlock *: spinLockGet) (lock)
+#define lockGetIrq(lock) _Generic ((lock), spinlock *: spinLockGetIrq) (lock)
+#define lockGetIrq_S(lock, flags)                                             \
+  _Generic ((lock), spinlock *: spinLockGetIrq_S) (lock, flags)
 
-#define lockTry(lock) _Generic ((lock), spinlock *: spinTryLock) (lock)
+#define lockTry(lock) _Generic ((lock), spinlock *: spinLockTry) (lock)
 #define lockTryIrq(lock, flags)                                               \
-  _Generic ((lock), spinlock *: spinTryLockIrq) (lock, flags)
+  _Generic ((lock), spinlock *: spinLockTryIrq) (lock, &flags)
 
-#define lockPut(lock) _Generic ((lock), spinlock *: spinUnlock) (lock)
+#define lockPut(lock) _Generic ((lock), spinlock *: spinLockPut) (lock)
 #define lockPutIrq(lock, flags)                                               \
-  _Generic ((lock), spinlock *: spinUnlockIrq) (lock, flags)
+  _Generic ((lock), spinlock *: spinLockPutIrq) (lock, &flags)
 
-#define spinLockIrq(lock, flags)                                              \
-  do                                                                          \
-    {                                                                         \
-      flags = irqSave ();                                                     \
-      spinLock (lock);                                                        \
-    }                                                                         \
-  while (0)
+void spinLockGet (spinlock *lock);
+bool spinLockTry (spinlock *lock);
+void spinLockPut (spinlock *lock);
 
-#define spinTryLockIrq(lock, flags)                                           \
-  ({                                                                          \
-    flags = irqSave ();                                                       \
-    auto _locked = spinTryLock (lock);                                        \
-    if (!_locked)                                                             \
-      irqRestore (flags);                                                     \
-    _locked                                                                   \
-  })
+static inline ulong force_inline
+spinLockGetIrq (spinlock *lock)
+{
+  auto flags = irqSave ();
+  spinLockGet (lock);
+  return flags;
+}
 
-#define spinUnlockIrq(lock, flags)                                            \
-  do                                                                          \
-    {                                                                         \
-      spinUnlock (lock);                                                      \
-      irqRestore (flags);                                                     \
-    }                                                                         \
-  while (0)
+static inline void force_inline
+spinLockGetIrq_S (spinlock *lock, ulong *flags)
+{
+  *flags = irqSave ();
+  spinLockGet (lock);
+}
 
-void spinLock (spinlock *lock);
-bool spinTryLock (spinlock *lock);
-void spinUnlock (spinlock *lock);
+static inline bool force_inline
+spinLockTryIrq (spinlock *lock, ulong *flags)
+{
+  *flags = irqSave ();
+  auto locked = spinLockTry (lock);
+
+  if (!locked)
+    irqRestore (*flags);
+
+  return locked;
+}
+
+static inline void force_inline
+spinLockPutIrq (spinlock *lock, ulong *flags)
+{
+  spinLockPut (lock);
+  irqRestore (*flags);
+}
 
 #endif
