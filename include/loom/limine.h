@@ -16,6 +16,9 @@
 #define LIMINE_FRAMEBUFFER_REQUEST_ID                                         \
   { LIMINE_COMMON_MAGIC, 0x9d5827dcd881dd75, 0xa3148604f6fab11b }
 
+#define LIMINE_MP_REQUEST_ID                                                  \
+  { LIMINE_COMMON_MAGIC, 0x95a67b819a1b857e, 0xa0b61b723b6a73e0 }
+
 #define LIMINE_MEMMAP_REQUEST_ID                                              \
   { LIMINE_COMMON_MAGIC, 0x67cf3d9d378a806f, 0xe304acdfc50c3c62 }
 
@@ -91,6 +94,38 @@ struct limine_video_mode
   u8  blue_mask_shift;
 };
 
+struct limine_mp_request
+{
+  u64                        id[4];
+  u64                        revision;
+  struct limine_mp_response *response;
+#define LIMINE_MP_REQUEST_X86_64_X2APIC (1 << 0)
+  u64 flags;
+};
+
+struct limine_mp_response
+{
+  u64 revision;
+#define LIMINE_MP_RESPONSE_X86_64_X2APIC (1 << 0)
+  u32                     flags;
+  u32                     bsp_lapic_id;
+  u64                     cpu_count;
+  struct limine_mp_info **cpus;
+};
+
+struct limine_mp_info;
+
+typedef void (*limine_goto_address) (struct limine_mp_info *);
+
+struct limine_mp_info
+{
+  u32                 processor_id;
+  u32                 lapic_id;
+  u64                 reserved;
+  limine_goto_address goto_address;
+  u64                 extra_argument;
+};
+
 struct limine_memmap_request
 {
   u64                            id[4];
@@ -159,6 +194,6 @@ earlyLimineGfxConsoleCreate (struct limine_framebuffer *fb)
 
 bool limineGetBootTime (timestamp *ts);
 
-struct boot_info limineEarlyBoot (void);
+struct boot_info limineEarlyBoot (struct boot_request rq);
 
 #endif

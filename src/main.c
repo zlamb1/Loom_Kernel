@@ -1,12 +1,30 @@
+#include <stdatomic.h>
+
+#include "loom/arch.h"
 #include "loom/limine.h"
 #include "loom/mmap.h"
 #include "loom/print.h"
 #include "loom/time.h"
 
+static atomic bool mpPause = true;
+
+noreturn void
+mpMain (cpu_handle handle)
+{
+  while (atomic_load_explicit (&mpPause, memory_order_relaxed))
+    cpuRelax ();
+
+  kLogLn ("Starting MP #%u64", cpuHandle ());
+
+  for (;;)
+    ;
+}
+
 noreturn void
 loomMain (void)
 {
-  auto bi = limineEarlyBoot ();
+  struct boot_request rq = { .bs_func = mpMain };
+  auto                bi = limineEarlyBoot (rq);
 
   kLogLn ("Booting...");
 
@@ -15,6 +33,10 @@ loomMain (void)
 
   if (bi.mmap_iterator != null)
     mmapInit (bi.mmap_iterator);
+
+  kLogLn ("Bootstrap MP #%u64", cpuHandle ());
+
+  atomic_store_explicit (&mpPause, false, memory_order_relaxed);
 
   for (;;)
     ;

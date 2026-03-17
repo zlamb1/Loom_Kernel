@@ -1,3 +1,8 @@
+#include <stdatomic.h>
+
+#include "loom/arch.h"
+#include "loom/boot_info.h"
+#include "loom/compiler.h"
 #include "loom/limine.h"
 #include "loom/mmap.h"
 #include "loom/print.h"
@@ -10,12 +15,14 @@ struct
 {
   u64                                start_marker[4];
   struct limine_framebuffer_request  fb;
+  struct limine_mp_request           mp;
   struct limine_memmap_request       memmap;
   struct limine_date_at_boot_request date_at_boot;
   u64                                end_marker[4];
 } static volatile used section (".limine") requests = {
   .start_marker = LIMINE_REQUESTS_START_MARKER,
   .fb = { .id = LIMINE_FRAMEBUFFER_REQUEST_ID },
+  .mp = { .id = LIMINE_MP_REQUEST_ID },
   .memmap = { .id = LIMINE_MEMMAP_REQUEST_ID },
   .date_at_boot = { .id = LIMINE_DATE_AT_BOOT_REQUEST_ID },
   .end_marker = LIMINE_REQUESTS_END_MARKER,
@@ -96,8 +103,22 @@ limineMmapIterate (mmap_iterator_hook hook, void *ctx)
   return 0;
 }
 
+static inline void force_inline
+writeCpuHandle (u64 handle)
+{
+  writeMsr (IA32_TSC_AUX, handle);
+}
+
+static void
+limineMpMain (struct limine_mp_info *info)
+{
+  writeCpuHandle (info->lapic_id);
+  auto func = (mp_bootstrap_func) info->extra_argument;
+  func (info->lapic_id);
+}
+
 struct boot_info
-limineEarlyBoot (void)
+limineEarlyBoot (struct boot_request rq)
 {
   struct boot_info bi;
 
@@ -105,6 +126,25 @@ limineEarlyBoot (void)
 
   bi.boot_time_set = limineGetBootTime (&bi.boot_time);
   bi.mmap_iterator = limineMmapIterate;
+
+  if (requests.mp.response != null && rq.bs_func != null)
+    {
+      auto response = requests.mp.response;
+
+      writeCpuHandle (response->bsp_lapic_id);
+
+      for (u64 i = 0; i < response->cpu_count; ++i)
+        {
+          auto cpu = response->cpus[i];
+          if (cpu->lapic_id == response->bsp_lapic_id)
+            continue;
+          atomic_store_explicit ((atomic u64 *) &cpu->extra_argument,
+                                 (u64) rq.bs_func, memory_order_release);
+          atomic_store_explicit (
+              (atomic limine_goto_address *) &cpu->goto_address, limineMpMain,
+              memory_order_relaxed);
+        }
+    }
 
   return bi;
 }

@@ -4,5 +4,5 @@ set pagination off
 
 layout src
 
-b loom_main
+b loomMain
 c
