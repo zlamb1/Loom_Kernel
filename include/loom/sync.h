@@ -13,16 +13,16 @@ struct tspinlock
 
 typedef struct tspinlock spinlock;
 
-#define lock(lock) _Generic ((lock), spinlock *: spinLock) (lock)
-#define lockIrq(lock, flags)                                                  \
+#define lockGet(lock) _Generic ((lock), spinlock *: spinLock) (lock)
+#define lockGetIrq(lock, flags)                                               \
   _Generic ((lock), spinlock *: spinLockIrq) (lock, flags)
 
-#define tryLock(lock) _Generic ((lock), spinlock *: spinTryLock) (lock)
-#define tryLockIrq(lock, flags)                                               \
+#define lockTry(lock) _Generic ((lock), spinlock *: spinTryLock) (lock)
+#define lockTryIrq(lock, flags)                                               \
   _Generic ((lock), spinlock *: spinTryLockIrq) (lock, flags)
 
-#define unlock(lock) _Generic ((lock), spinlock *: spinUnlock) (lock)
-#define unlockIrq(lock, flags)                                                \
+#define lockPut(lock) _Generic ((lock), spinlock *: spinUnlock) (lock)
+#define lockPutIrq(lock, flags)                                               \
   _Generic ((lock), spinlock *: spinUnlockIrq) (lock, flags)
 
 #define spinLockIrq(lock, flags)                                              \
@@ -36,10 +36,10 @@ typedef struct tspinlock spinlock;
 #define spinTryLockIrq(lock, flags)                                           \
   ({                                                                          \
     flags = irqSave ();                                                       \
-    auto locked = spinTryLock (lock);                                         \
-    if (!locked)                                                              \
+    auto _locked = spinTryLock (lock);                                        \
+    if (!_locked)                                                             \
       irqRestore (flags);                                                     \
-    locked                                                                    \
+    _locked                                                                   \
   })
 
 #define spinUnlockIrq(lock, flags)                                            \
