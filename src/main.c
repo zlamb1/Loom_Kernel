@@ -16,6 +16,8 @@ mpMain (cpu_handle handle)
 
   kLogLn ("Starting MP #%u64", cpuHandle ());
 
+  cpuStop ();
+
   for (;;)
     ;
 }
