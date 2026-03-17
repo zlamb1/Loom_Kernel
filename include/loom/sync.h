@@ -13,6 +13,18 @@ struct tspinlock
 
 typedef struct tspinlock spinlock;
 
+#define lock(lock) _Generic ((lock), spinlock *: spinLock) (lock)
+#define lockIrq(lock, flags)                                                  \
+  _Generic ((lock), spinlock *: spinLockIrq) (lock, flags)
+
+#define tryLock(lock) _Generic ((lock), spinlock *: spinTryLock) (lock)
+#define tryLockIrq(lock, flags)                                               \
+  _Generic ((lock), spinlock *: spinTryLockIrq) (lock, flags)
+
+#define unlock(lock) _Generic ((lock), spinlock *: spinUnlock) (lock)
+#define unlockIrq(lock, flags)                                                \
+  _Generic ((lock), spinlock *: spinUnlockIrq) (lock, flags)
+
 #define spinLockIrq(lock, flags)                                              \
   do                                                                          \
     {                                                                         \
@@ -20,6 +32,15 @@ typedef struct tspinlock spinlock;
       spinLock (lock);                                                        \
     }                                                                         \
   while (0)
+
+#define spinTryLockIrq(lock, flags)                                           \
+  ({                                                                          \
+    flags = irqSave ();                                                       \
+    auto locked = spinTryLock (lock);                                         \
+    if (!locked)                                                              \
+      irqRestore (flags);                                                     \
+    locked                                                                    \
+  })
 
 #define spinUnlockIrq(lock, flags)                                            \
   do                                                                          \
